@@ -1,59 +1,18 @@
-html, body {
-  height: 100%;
-  margin: 0;
-  font-family: Arial, sans-serif;
-}
+﻿/* Base resets and small utilities */
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body { margin: 0; }
 
-.home {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #2b5876, #4e4376);
-  color: #fff;
-  text-align: center;
-  padding: 0 1rem;
-}
+/* Keep legacy classes if used somewhere else */
+.App { text-align: center; }
+/* Mobile viewport behavior */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
-.home-header h1 {
-  font-size: 3rem;
-  margin-bottom: 0.5rem;
-}
+/* Avoid iOS input zoom while keeping sane sizes */
+input, textarea, select, button { font-size: 16px; }
 
-.home-header p {
-  font-size: 1.2rem;
-  margin-bottom: 2rem;
-}
-
-.actions {
-  display: flex;
-  gap: 1rem;
-}
-
-.actions button {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 4px;
-  background-color: #ffffff;
-  color: #333;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.2s ease;
-}
-
-.actions button:hover {
-  background-color: #e0e0e0;
-}
-
-.message {
-  margin-top: 1.5rem;
-  font-size: 1rem;
-  opacity: 0.9;
-}
-
-.App {
-  text-align: center;
-  font-family: Arial, sans-serif;
-  margin-top: 2rem;
+@media (max-width: 480px) {
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.3rem; }
+  h3 { font-size: 1.05rem; }
 }

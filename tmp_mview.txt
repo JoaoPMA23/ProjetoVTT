@@ -1,0 +1,156 @@
+import React, { useEffect, useState } from 'react';
+
+function MasterView() {
+  const [campaigns, setCampaigns] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const [name, setName] = useState('');
+  const [system, setSystem] = useState('');
+  const [description, setDescription] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [pdfs, setPdfs] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+
+  const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+  async function fetchCampaigns() {
+    try {
+      setLoading(true);
+      setError('');
+      const res = await fetch(`${API}/campaigns`);
+      if (!res.ok) throw new Error('Falha ao carregar campanhas');
+      const data = await res.json();
+      setCampaigns(data);
+    } catch (e) {
+      setError(e.message === 'Failed to fetch' ? 'Não foi possível conectar à API. Verifique se o servidor está rodando.' : (e.message || 'Erro ao carregar'));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchPdfs() {
+    try {
+      setUploadError('');
+      const res = await fetch(`${API}/pdfs`);
+      if (!res.ok) throw new Error('Falha ao carregar PDFs');
+      const data = await res.json();
+      setPdfs(data);
+    } catch (e) {
+      setUploadError(e.message || 'Erro ao carregar PDFs');
+    }
+  }
+
+  async function onUploadPdf(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      setUploadError('Envie apenas arquivos PDF.');
+      return;
+    }
+    setUploading(true);
+    setUploadError('');
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch(`${API}/pdfs`, { method: 'POST', body: form });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Falha no upload');
+      }
+      const created = await res.json();
+      setPdfs((list) => [created, ...list]);
+      e.target.value = '';
+    } catch (e) {
+      setUploadError(e.message || 'Erro ao enviar');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  useEffect(() => { fetchCampaigns(); fetchPdfs(); }, []);
+
+  async function onSubmit(e) {
+    e.preventDefault();
+    if (!name.trim()) return setError('Informe um nome para a campanha.');
+    try {
+      setSaving(true);
+      setError('');
+      const res = await fetch(`${API}/campaigns`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, system, description })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Não foi possível salvar a campanha');
+      }
+      const created = await res.json();
+      setCampaigns((list) => [created, ...list]);
+      setName(''); setSystem(''); setDescription('');
+    } catch (e) {
+      setError(e.message === 'Failed to fetch' ? 'Não foi possível conectar à API. Verifique se o servidor está rodando.' : (e.message || 'Erro ao salvar'));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="view-container">
+      <h2>Mestre</h2>
+      <p>Cadastre e gerencie suas campanhas.</p>
+
+      <section className="form-card" aria-labelledby="form-title">
+        <h3 id="form-title">Nova campanha</h3>
+        <form onSubmit={onSubmit} className="campaign-form">
+          <div className="field">
+            <label htmlFor="name">Nome</label>
+            <input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: A Maldição de Strahd" />
+          </div>
+          <div className="field">
+            <label htmlFor="system">Sistema</label>
+            <input id="system" value={system} onChange={(e) => setSystem(e.target.value)} placeholder="Ex.: D&D 5e, Tormenta, etc." />
+          </div>
+          <div className="field">
+            <label htmlFor="description">Descrição</label>
+            <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Resumo da campanha" />
+          </div>
+          <div className="actions-row">
+            <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Salvando...' : 'Cadastrar'}</button>
+          </div>
+        </form>
+        {error && <p className="error-text" role="alert">{error}</p>}
+      </section>
+
+      <section style={{ marginTop: 24 }} aria-labelledby="list-title">
+        <h3 id="list-title">Campanhas</h3>
+        {loading ? (
+          <p>Carregando...</p>
+        ) : campaigns.length === 0 ? (
+          <p>Nenhuma campanha cadastrada ainda.</p>
+        ) : (
+          <ul className="campaign-list">
+            {campaigns.map((c) => (
+              <li key={c.id} className="campaign-item">
+                <div className="campaign-main">
+                  <strong>{c.name}</strong>
+                  {c.system && <span className="tag">{c.system}</span>}
+                </div>
+                {c.description && <p className="muted">{c.description}</p>}
+                <span className="muted small">Criada em {new Date(c.createdAt).toLocaleString()}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
+}
+
+export default MasterView;
+
+
+
+
+
