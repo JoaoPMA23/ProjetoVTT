@@ -20,11 +20,3 @@
 - **Chat integrado**: Comunicação entre jogadores e mestre com a possibilidade de enviar mensagens privadas.
 
 ---
-
-### Como Rodar o Projeto
-
-#### 1. Clone o repositório:
-
-```bash
-git clone https://github.com/seu-usuario/tabletop-rpg-app.git
-cd tabletop-rpg-app
