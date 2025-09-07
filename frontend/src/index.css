@@ -51,3 +51,9 @@ html, body {
   font-size: 1rem;
   opacity: 0.9;
 }
+
+.App {
+  text-align: center;
+  font-family: Arial, sans-serif;
+  margin-top: 2rem;
+}

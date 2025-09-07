@@ -1,1 +1,22 @@
+
+# dependências
 node_modules/
+
+# build/artefatos
+dist/
+build/
+coverage/
+
+# arquivos de ambiente
+.env
+.env.local
+.env.*
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# SO/IDE
+.DS_Store
+*.swp

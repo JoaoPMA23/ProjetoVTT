@@ -11,6 +11,10 @@ function Home() {
     setMessage('ProjetoVTT — gerencie aventuras com facilidade.');
   };
 
+
+import React from 'react';
+
+function Home() {
   return (
     <div className="home">
       <header className="home-header">
@@ -21,6 +25,8 @@ function Home() {
           <button onClick={handleAbout}>Sobre</button>
         </div>
         {message && <p className="message">{message}</p>}
+
+        <button>Começar</button>
       </header>
     </div>
   );
