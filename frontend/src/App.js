@@ -8,6 +8,7 @@ function App() {
     <div className="App">
       <Home />
 
+
       <h1>Tabletop RPG App</h1>
       <p>Bem-vindo ao seu RPG de mesa!</p>
     </div>
