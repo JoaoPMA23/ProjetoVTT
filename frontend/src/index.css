@@ -43,4 +43,8 @@ body {
 
 .home-header button:hover {
   background-color: #f0f0f0;
+
+.App {
+  text-align: center;
+  font-family: Arial, sans-serif;
 }
