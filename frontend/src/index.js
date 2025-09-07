@@ -1,14 +1,11 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
+import { createRoot } from 'react-dom/client';
+import App from './App';
 
-function App() {
-  return (
-    <div className="App">
-      <h1>Tabletop RPG App</h1>
-      <p>Bem-vindo ao seu RPG de mesa!</p>
-    </div>
-  );
-}
-
-ReactDOM.render(<App />, document.getElementById('root'));
+const container = document.getElementById('root');
+const root = createRoot(container);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
