@@ -1,0 +1,92 @@
+.App {
+  font-family: 'Arial', sans-serif;
+  text-align: center;
+  background-color: #f0f0f0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.App-header {
+  background-color: #FF6600;
+  color: white;
+  padding: 30px 20px;
+  border-bottom: 4px solid #e55b00;
+}
+
+h1 {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+p {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+}
+
+.cta-button {
+  background-color: #e55b00;
+  color: white;
+  padding: 15px 30px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.cta-button:hover {
+  background-color: #d14a00;
+}
+
+.features {
+  display: flex;
+  justify-content: space-around;
+  padding: 40px 20px;
+  background-color: #fff;
+  flex-grow: 1;
+}
+
+.feature-item {
+  max-width: 250px;
+  text-align: center;
+}
+
+.feature-item h3 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.App-footer {
+  background-color: #333;
+  color: white;
+  padding: 20px;
+}
+
+.social-links {
+  margin-top: 10px;
+}
+
+.social-links a {
+  color: white;
+  margin: 0 10px;
+  text-decoration: none;
+  font-size: 1rem;
+}
+
+.social-links a:hover {
+  text-decoration: underline;
+}
+
+/* Estilo Responsivo */
+@media (max-width: 768px) {
+  .features {
+    flex-direction: column;
+  }
+  
+  .feature-item {
+    margin-bottom: 20px;
+  }
+}
