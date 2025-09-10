@@ -1,11 +1,12 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { GiWizardFace, GiBroadsword } from 'react-icons/gi';
-import { FiMoon, FiSun, FiMenu, FiX } from 'react-icons/fi';
+import { FiMoon, FiSun, FiMenu, FiX, FiMap } from 'react-icons/fi';
 import './App.css';
 import Home from './pages/Home';
 import MasterView from './pages/MasterView';
 import PlayerView from './pages/PlayerView';
+import Tabletop from './pages/Tabletop';
 
 function App() {
   const getInitialTheme = () => {
@@ -47,6 +48,10 @@ function App() {
             <Link to="/jogador" className="nav-link" aria-label="Ir para visão do Jogador">
               <GiBroadsword className="icon" />
               Jogador
+            </Link>
+            <Link to="/tabletop" className="nav-link" aria-label="Ir para mesa virtual">
+              <FiMap className="icon" />
+              Tabletop
             </Link>
           </nav>
           <div className="header-actions">
@@ -98,6 +103,9 @@ function App() {
             <Link to="/jogador" className="mobile-link" onClick={() => setMenuOpen(false)}>
               <GiBroadsword className="icon" /> Jogador
             </Link>
+            <Link to="/tabletop" className="mobile-link" onClick={() => setMenuOpen(false)}>
+              <FiMap className="icon" /> Tabletop
+            </Link>
           </nav>
         </div>
 
@@ -105,6 +113,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/mestre" element={<MasterView />} />
           <Route path="/jogador" element={<PlayerView />} />
+          <Route path="/tabletop" element={<Tabletop />} />
         </Routes>
 
         <footer className="site-footer">
