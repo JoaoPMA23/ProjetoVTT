@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./Tabletop.css";
 
+
 function useRaf(callback) {
   const cb = useRef(callback);
   useEffect(() => {
@@ -18,6 +19,8 @@ function useRaf(callback) {
 }
 
 export default function Tabletop() {
+
+function VTTStarter() {
   // Canvas/state
   const canvasRef = useRef(null);
   const [gridSize, setGridSize] = useState(64);
@@ -396,6 +399,73 @@ export default function Tabletop() {
           <label className="tt-btn">
             Import
             <input type="file" accept="application/json" style={{ display: 'none' }} onChange={(e) => importScene(e.target.files?.[0])} />
+
+    <div className="w-full h-full flex flex-col bg-slate-900 text-slate-100">
+      {/* Top bar */}
+      <div className="flex items-center gap-2 p-3 border-b border-slate-800 bg-gradient-to-r from-slate-900 to-slate-800 sticky top-0 z-10">
+        <span className="font-semibold text-lg">VTT Starter</span>
+        <label className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 cursor-pointer text-sm">
+          Map
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => onLoadMap(e.target.files?.[0])}
+          />
+        </label>
+        <label className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 cursor-pointer text-sm">
+          Add Token
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => onAddToken(e.target.files?.[0])}
+          />
+        </label>
+        <div className="hidden sm:flex items-center gap-2 ml-2">
+          <button
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm"
+            onClick={() => {
+              setPan({ x: 0, y: 0 });
+              setZoom(1);
+            }}
+          >
+            Reset View
+          </button>
+          <button
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm"
+            onClick={() => setShowGrid((v) => !v)}
+          >
+            {showGrid ? "Hide Grid" : "Show Grid"}
+          </button>
+          <button
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm"
+            onClick={() => setSnap((v) => !v)}
+          >
+            {snap ? "Snap ON" : "Snap OFF"}
+          </button>
+        </div>
+        <div className="flex items-center gap-2 ml-auto">
+          <button
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm"
+            onClick={() => roll(20)}
+          >
+            Roll d20
+          </button>
+          <button
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm"
+            onClick={exportScene}
+          >
+            Export
+          </button>
+          <label className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 cursor-pointer text-sm">
+            Import
+            <input
+              type="file"
+              accept="application/json"
+              className="hidden"
+              onChange={(e) => importScene(e.target.files?.[0])}
+            />
           </label>
         </div>
       </div>
@@ -417,6 +487,49 @@ export default function Tabletop() {
               <div className="tt-section-label">Dica</div>
               <ul className="tt-hint-list">
                 <li>Segure <kbd>Shift</kbd> para medir</li>
+
+      {/* Main area */}
+      <div className="flex flex-1 min-h-0">
+        {/* Left controls */}
+        <div className="w-64 p-3 border-r border-slate-800 hidden md:block">
+          <div className="space-y-4">
+            <div>
+              <div className="text-xs uppercase tracking-wide text-slate-400 mb-1">
+                Grid
+              </div>
+              <input
+                type="range"
+                min={24}
+                max={160}
+                value={gridSize}
+                onChange={(e) => setGridSize(parseInt(e.target.value))}
+                className="w-full"
+              />
+              <div className="text-sm mt-1">{gridSize}px / célula</div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-slate-400 mb-1">
+                Zoom
+              </div>
+              <input
+                type="range"
+                min={0.2}
+                max={6}
+                step={0.1}
+                value={zoom}
+                onChange={(e) => setZoom(parseFloat(e.target.value))}
+                className="w-full"
+              />
+              <div className="text-sm mt-1">{zoom.toFixed(2)}x</div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-slate-400 mb-1">
+                Dica
+              </div>
+              <ul className="text-sm list-disc pl-4 space-y-1 text-slate-300">
+                <li>
+                  Segure <kbd className="px-1 rounded bg-slate-800">Shift</kbd> para medir
+                </li>
                 <li>Arraste vazio para mover a câmera</li>
                 <li>Roda do mouse para zoom</li>
                 <li>"Snap ON" alinha tokens na grade</li>
@@ -425,6 +538,10 @@ export default function Tabletop() {
             {diceRoll && (
               <div className="tt-dice-roll">
                 d{diceRoll.sides} → <span>{diceRoll.v}</span>
+              <div className="rounded-xl bg-slate-800 p-3">
+                <div className="text-sm">
+                  d{diceRoll.sides} → <span className="font-semibold text-lime-400">{diceRoll.v}</span>
+                </div>
               </div>
             )}
           </div>
@@ -437,6 +554,17 @@ export default function Tabletop() {
               <div>
                 <div>Carregue um mapa para começar</div>
                 <div>Depois adicione tokens (PNGs com fundo transparente ficam ótimos)</div>
+
+        {/* Canvas */}
+        <div className="flex-1 relative">
+          <canvas ref={canvasRef} className="w-full h-full block cursor-crosshair" />
+          {!mapSrc && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="text-center text-slate-400">
+                <div className="text-xl font-semibold">Carregue um mapa para começar</div>
+                <div className="text-sm">
+                  Depois adicione tokens (PNGs com fundo transparente ficam ótimos)
+                </div>
               </div>
             </div>
           )}
@@ -472,6 +600,68 @@ export default function Tabletop() {
                 <div>{selected.name}</div>
                 <div className="tt-selected-grid">
                   <label>
+
+        {/* Right panel */}
+        <div className="w-72 p-3 border-l border-slate-800 hidden lg:flex flex-col gap-3">
+          <div>
+            <div className="text-xs uppercase tracking-wide text-slate-400 mb-2">Tokens</div>
+            <div className="space-y-2 max-h-[40vh] overflow-auto pr-1">
+              {tokens.map((t) => (
+                <div
+                  key={t.id}
+                  className={`p-2 rounded-xl border ${
+                    selectedId === t.id
+                      ? "border-blue-400 bg-blue-500/10"
+                      : "border-slate-800 bg-slate-800/60"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded overflow-hidden bg-slate-700 flex items-center justify-center">
+                      <img
+                        src={t.src}
+                        alt="token"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <input
+                      value={t.name}
+                      onChange={(e) =>
+                        setTokens((arr) =>
+                          arr.map((x) =>
+                            x.id === t.id
+                              ? { ...x, name: e.target.value }
+                              : x
+                          )
+                        )
+                      }
+                      className="flex-1 bg-transparent outline-none text-sm"
+                    />
+                    <button
+                      className="text-xs px-2 py-1 rounded bg-slate-700 hover:bg-red-600"
+                      onClick={() =>
+                        setTokens((arr) => arr.filter((x) => x.id !== t.id))
+                      }
+                    >
+                      Del
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {tokens.length === 0 && (
+                <div className="text-sm text-slate-400">Sem tokens ainda</div>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-auto">
+            <div className="text-xs uppercase tracking-wide text-slate-400 mb-2">
+              Selecionado
+            </div>
+            {selected ? (
+              <div className="space-y-2 p-3 rounded-xl bg-slate-800/60 border border-slate-800">
+                <div className="text-sm font-medium">{selected.name}</div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <label className="flex flex-col">
                     X
                     <input
                       type="number"
@@ -484,6 +674,18 @@ export default function Tabletop() {
                     />
                   </label>
                   <label>
+
+                          arr.map((t) =>
+                            t.id === selected.id
+                              ? { ...t, x: parseFloat(e.target.value) }
+                              : t
+                          )
+                        )
+                      }
+                      className="bg-slate-900 rounded px-2 py-1"
+                    />
+                  </label>
+                  <label className="flex flex-col">
                     Y
                     <input
                       type="number"
@@ -496,6 +698,17 @@ export default function Tabletop() {
                     />
                   </label>
                   <label>
+                          arr.map((t) =>
+                            t.id === selected.id
+                              ? { ...t, y: parseFloat(e.target.value) }
+                              : t
+                          )
+                        )
+                      }
+                      className="bg-slate-900 rounded px-2 py-1"
+                    />
+                  </label>
+                  <label className="flex flex-col">
                     W
                     <input
                       type="number"
@@ -508,6 +721,17 @@ export default function Tabletop() {
                     />
                   </label>
                   <label>
+                          arr.map((t) =>
+                            t.id === selected.id
+                              ? { ...t, w: parseFloat(e.target.value) }
+                              : t
+                          )
+                        )
+                      }
+                      className="bg-slate-900 rounded px-2 py-1"
+                    />
+                  </label>
+                  <label className="flex flex-col">
                     H
                     <input
                       type="number"
@@ -523,6 +747,21 @@ export default function Tabletop() {
                 <div className="tt-selected-actions">
                   <button
                     className="tt-btn"
+
+                          arr.map((t) =>
+                            t.id === selected.id
+                              ? { ...t, h: parseFloat(e.target.value) }
+                              : t
+                          )
+                        )
+                      }
+                      className="bg-slate-900 rounded px-2 py-1"
+                    />
+                  </label>
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    className="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-sm"
                     onClick={() =>
                       setTokens((arr) =>
                         arr.map((t) =>
@@ -545,6 +784,17 @@ export default function Tabletop() {
                       setTokens((arr) =>
                         arr.map((t) =>
                           t.id === selected.id ? { ...t, w: gridSize, h: (t.h / t.w) * gridSize } : t
+                    className="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-sm"
+                    onClick={() =>
+                      setTokens((arr) =>
+                        arr.map((t) =>
+                          t.id === selected.id
+                            ? {
+                                ...t,
+                                w: gridSize,
+                                h: (t.h / t.w) * gridSize,
+                              }
+                            : t
                         )
                       )
                     }
@@ -555,6 +805,9 @@ export default function Tabletop() {
               </div>
             ) : (
               <div className="tt-range-value">Nenhum token selecionado</div>
+              <div className="text-sm text-slate-400">
+                Nenhum token selecionado
+              </div>
             )}
           </div>
         </div>
@@ -566,3 +819,169 @@ export default function Tabletop() {
     </div>
   );
 }
+      {/* Footer */}
+      <div className="p-2 text-center text-xs text-slate-400 border-t border-slate-800">
+        MVP VTT • Shift = régua • Export/Import cena • Expandir: chat, iniciativa, fog of war, iluminação, multiusuário
+      </div>
+
+import React, { useRef, useState, useEffect } from 'react';
+
+function VTTStarter() {
+  const canvasRef = useRef(null);
+  const [mapImage, setMapImage] = useState(null);
+  const [tokens, setTokens] = useState([]);
+  const [measureMode, setMeasureMode] = useState(false);
+  const [measureStart, setMeasureStart] = useState(null);
+  const [measureEnd, setMeasureEnd] = useState(null);
+
+  const drawTokens = (ctx) => {
+    tokens.forEach((t) => {
+      ctx.fillStyle = 'red';
+      ctx.beginPath();
+      ctx.arc(t.x, t.y, 10, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  };
+
+  const drawMeasurement = (ctx) => {
+    if (measureStart && measureEnd) {
+      ctx.strokeStyle = 'yellow';
+      ctx.beginPath();
+      ctx.moveTo(measureStart.x, measureStart.y);
+      ctx.lineTo(measureEnd.x, measureEnd.y);
+      ctx.stroke();
+      const dist = Math.hypot(
+        measureEnd.x - measureStart.x,
+        measureEnd.y - measureStart.y
+      ).toFixed(1);
+      ctx.fillStyle = 'yellow';
+      ctx.fillText(
+        dist,
+        (measureStart.x + measureEnd.x) / 2,
+        (measureStart.y + measureEnd.y) / 2
+      );
+    }
+  };
+
+  const redraw = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (mapImage) {
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        drawTokens(ctx);
+        drawMeasurement(ctx);
+      };
+      img.src = mapImage;
+    } else {
+      drawTokens(ctx);
+      drawMeasurement(ctx);
+    }
+  };
+
+  useEffect(redraw, [mapImage, tokens, measureStart, measureEnd]);
+
+  const onCanvasClick = (e) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    if (measureMode) {
+      if (!measureStart) setMeasureStart({ x, y });
+      else if (!measureEnd) setMeasureEnd({ x, y });
+      else {
+        setMeasureStart({ x, y });
+        setMeasureEnd(null);
+      }
+    } else {
+      setTokens((ts) => [...ts, { id: Date.now(), x, y }]);
+    }
+  };
+
+  const loadMap = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setMapImage(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  const exportScene = () => {
+    const data = JSON.stringify({ mapImage, tokens });
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'scene.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importScene = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        setMapImage(data.mapImage || null);
+        setTokens(Array.isArray(data.tokens) ? data.tokens : []);
+      } catch {
+        // arquivo inválido
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const toggleMeasure = () => {
+    setMeasureMode((m) => !m);
+    setMeasureStart(null);
+    setMeasureEnd(null);
+  };
+
+  const clearMeasure = () => {
+    setMeasureStart(null);
+    setMeasureEnd(null);
+  };
+
+  return (
+    <div className="vtt-starter">
+      <div className="controls">
+        <label>
+          Mapa: <input type="file" accept="image/*" onChange={loadMap} />
+        </label>
+        <button type="button" onClick={toggleMeasure}>
+          {measureMode ? 'Adicionar Tokens' : 'Medir Distância'}
+        </button>
+        {measureStart && measureEnd && (
+          <button type="button" onClick={clearMeasure}>
+            Limpar Medida
+          </button>
+        )}
+        <button type="button" onClick={exportScene}>
+          Exportar Cena
+        </button>
+        <label style={{ marginLeft: '0.5rem' }}>
+          Importar Cena: <input type="file" accept="application/json" onChange={importScene} />
+        </label>
+      </div>
+      <canvas
+        ref={canvasRef}
+        width={800}
+        height={600}
+        onClick={onCanvasClick}
+        style={{ border: '1px solid #ccc', marginTop: '10px' }}
+      />
+
+    </div>
+  );
+}
+
+export default function Tabletop() {
+  return <VTTStarter />;
+}
+
