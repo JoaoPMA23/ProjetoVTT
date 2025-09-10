@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import "./Tabletop.css";
+
 
 function useRaf(callback) {
   const cb = useRef(callback);
@@ -15,6 +17,8 @@ function useRaf(callback) {
     return () => cancelAnimationFrame(rafId);
   }, []);
 }
+
+export default function Tabletop() {
 
 function VTTStarter() {
   // Canvas/state
@@ -373,6 +377,29 @@ function VTTStarter() {
   );
 
   return (
+    <div className="tabletop-root">
+      <div className="tt-topbar">
+        <span>VTT Starter</span>
+        <label className="tt-btn">
+          Map
+          <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => onLoadMap(e.target.files?.[0])} />
+        </label>
+        <label className="tt-btn">
+          Add Token
+          <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => onAddToken(e.target.files?.[0])} />
+        </label>
+        <div className="tt-topbar-group">
+          <button className="tt-btn" onClick={() => { setPan({ x: 0, y: 0 }); setZoom(1); }}>Reset View</button>
+          <button className="tt-btn" onClick={() => setShowGrid((v) => !v)}>{showGrid ? 'Hide Grid' : 'Show Grid'}</button>
+          <button className="tt-btn" onClick={() => setSnap((v) => !v)}>{snap ? 'Snap ON' : 'Snap OFF'}</button>
+        </div>
+        <div className="tt-topbar-group right">
+          <button className="tt-btn" onClick={() => roll(20)}>Roll d20</button>
+          <button className="tt-btn" onClick={exportScene}>Export</button>
+          <label className="tt-btn">
+            Import
+            <input type="file" accept="application/json" style={{ display: 'none' }} onChange={(e) => importScene(e.target.files?.[0])} />
+
     <div className="w-full h-full flex flex-col bg-slate-900 text-slate-100">
       {/* Top bar */}
       <div className="flex items-center gap-2 p-3 border-b border-slate-800 bg-gradient-to-r from-slate-900 to-slate-800 sticky top-0 z-10">
@@ -443,6 +470,24 @@ function VTTStarter() {
         </div>
       </div>
 
+      <div className="tt-main">
+        <div className="tt-sidebar-left">
+          <div className="tt-controls">
+            <div>
+              <div className="tt-section-label">Grid</div>
+              <input type="range" min={24} max={160} value={gridSize} onChange={(e) => setGridSize(parseInt(e.target.value))} />
+              <div className="tt-range-value">{gridSize}px / célula</div>
+            </div>
+            <div>
+              <div className="tt-section-label">Zoom</div>
+              <input type="range" min={0.2} max={6} step={0.1} value={zoom} onChange={(e) => setZoom(parseFloat(e.target.value))} />
+              <div className="tt-range-value">{zoom.toFixed(2)}x</div>
+            </div>
+            <div>
+              <div className="tt-section-label">Dica</div>
+              <ul className="tt-hint-list">
+                <li>Segure <kbd>Shift</kbd> para medir</li>
+
       {/* Main area */}
       <div className="flex flex-1 min-h-0">
         {/* Left controls */}
@@ -491,6 +536,8 @@ function VTTStarter() {
               </ul>
             </div>
             {diceRoll && (
+              <div className="tt-dice-roll">
+                d{diceRoll.sides} → <span>{diceRoll.v}</span>
               <div className="rounded-xl bg-slate-800 p-3">
                 <div className="text-sm">
                   d{diceRoll.sides} → <span className="font-semibold text-lime-400">{diceRoll.v}</span>
@@ -499,6 +546,14 @@ function VTTStarter() {
             )}
           </div>
         </div>
+
+        <div className="tt-canvas-wrap">
+          <canvas ref={canvasRef} className="tt-canvas" />
+          {!mapSrc && (
+            <div className="tt-empty">
+              <div>
+                <div>Carregue um mapa para começar</div>
+                <div>Depois adicione tokens (PNGs com fundo transparente ficam ótimos)</div>
 
         {/* Canvas */}
         <div className="flex-1 relative">
@@ -514,6 +569,37 @@ function VTTStarter() {
             </div>
           )}
         </div>
+
+        <div className="tt-sidebar-right">
+          <div>
+            <div className="tt-section-label">Tokens</div>
+            <div className="tt-token-list">
+              {tokens.map((t) => (
+                <div key={t.id} className={`tt-token-item ${selectedId === t.id ? 'selected' : ''}`}>
+                  <div className="tt-token-row">
+                    <div className="tt-token-thumb">
+                      <img src={t.src} alt="token" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    </div>
+                    <input
+                      value={t.name}
+                      onChange={(e) => setTokens((arr) => arr.map((x) => (x.id === t.id ? { ...x, name: e.target.value } : x)))}
+                      className="tt-token-name"
+                    />
+                    <button className="tt-token-del" onClick={() => setTokens((arr) => arr.filter((x) => x.id !== t.id))}>Del</button>
+                  </div>
+                </div>
+              ))}
+              {tokens.length === 0 && <div className="tt-range-value">Sem tokens ainda</div>}
+            </div>
+          </div>
+
+          <div className="tt-selected">
+            <div className="tt-section-label">Selecionado</div>
+            {selected ? (
+              <div className="tt-selected-panel">
+                <div>{selected.name}</div>
+                <div className="tt-selected-grid">
+                  <label>
 
         {/* Right panel */}
         <div className="w-72 p-3 border-l border-slate-800 hidden lg:flex flex-col gap-3">
@@ -582,6 +668,13 @@ function VTTStarter() {
                       value={Math.round(selected.x)}
                       onChange={(e) =>
                         setTokens((arr) =>
+                          arr.map((t) => (t.id === selected.id ? { ...t, x: parseFloat(e.target.value) } : t))
+                        )
+                      }
+                    />
+                  </label>
+                  <label>
+
                           arr.map((t) =>
                             t.id === selected.id
                               ? { ...t, x: parseFloat(e.target.value) }
@@ -599,6 +692,12 @@ function VTTStarter() {
                       value={Math.round(selected.y)}
                       onChange={(e) =>
                         setTokens((arr) =>
+                          arr.map((t) => (t.id === selected.id ? { ...t, y: parseFloat(e.target.value) } : t))
+                        )
+                      }
+                    />
+                  </label>
+                  <label>
                           arr.map((t) =>
                             t.id === selected.id
                               ? { ...t, y: parseFloat(e.target.value) }
@@ -616,6 +715,12 @@ function VTTStarter() {
                       value={Math.round(selected.w)}
                       onChange={(e) =>
                         setTokens((arr) =>
+                          arr.map((t) => (t.id === selected.id ? { ...t, w: parseFloat(e.target.value) } : t))
+                        )
+                      }
+                    />
+                  </label>
+                  <label>
                           arr.map((t) =>
                             t.id === selected.id
                               ? { ...t, w: parseFloat(e.target.value) }
@@ -633,6 +738,16 @@ function VTTStarter() {
                       value={Math.round(selected.h)}
                       onChange={(e) =>
                         setTokens((arr) =>
+                          arr.map((t) => (t.id === selected.id ? { ...t, h: parseFloat(e.target.value) } : t))
+                        )
+                      }
+                    />
+                  </label>
+                </div>
+                <div className="tt-selected-actions">
+                  <button
+                    className="tt-btn"
+
                           arr.map((t) =>
                             t.id === selected.id
                               ? { ...t, h: parseFloat(e.target.value) }
@@ -664,6 +779,11 @@ function VTTStarter() {
                     Snap
                   </button>
                   <button
+                    className="tt-btn"
+                    onClick={() =>
+                      setTokens((arr) =>
+                        arr.map((t) =>
+                          t.id === selected.id ? { ...t, w: gridSize, h: (t.h / t.w) * gridSize } : t
                     className="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-sm"
                     onClick={() =>
                       setTokens((arr) =>
@@ -684,6 +804,7 @@ function VTTStarter() {
                 </div>
               </div>
             ) : (
+              <div className="tt-range-value">Nenhum token selecionado</div>
               <div className="text-sm text-slate-400">
                 Nenhum token selecionado
               </div>
@@ -692,6 +813,12 @@ function VTTStarter() {
         </div>
       </div>
 
+      <div className="tt-footer">
+        MVP VTT • Shift = régua • Export/Import cena • Expandir: chat, iniciativa, fog of war, iluminação, multiusuário
+      </div>
+    </div>
+  );
+}
       {/* Footer */}
       <div className="p-2 text-center text-xs text-slate-400 border-t border-slate-800">
         MVP VTT • Shift = régua • Export/Import cena • Expandir: chat, iniciativa, fog of war, iluminação, multiusuário
