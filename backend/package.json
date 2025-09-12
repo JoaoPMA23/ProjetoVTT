@@ -6,7 +6,10 @@
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "multer": "^2.0.2",
-    "socket.io": "^4.7.5"
+    "socket.io": "^4.7.5",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.9.13"
   },
   "scripts": {
     "start": "node src/index.js"

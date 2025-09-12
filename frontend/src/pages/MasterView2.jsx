@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FiMessageCircle, FiMap, FiLock, FiGlobe, FiFileText, FiImage, FiType, FiBookOpen, FiPlusCircle, FiList } from 'react-icons/fi';
+import { useAuth } from '../AuthContext';
 
 function MasterView() {
   const [campaigns, setCampaigns] = useState([]);
@@ -10,8 +11,6 @@ function MasterView() {
   const [system, setSystem] = useState('');
   const [description, setDescription] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
-  const [pdfFile, setPdfFile] = useState(null);
-  const [imageFile, setImageFile] = useState(null);
   const [saving, setSaving] = useState(false);
 
   const [pdfs, setPdfs] = useState([]);
@@ -19,6 +18,7 @@ function MasterView() {
   const [uploadError, setUploadError] = useState('');
 
   const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const { token } = useAuth() || {};
 
   async function fetchCampaigns() {
     try {
@@ -68,7 +68,7 @@ function MasterView() {
       setUploadError('');
       const res = await fetch(API + '/campaigns', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
         body: JSON.stringify({ name, system, description, isPrivate })
       });
       if (!res.ok) {
@@ -78,41 +78,7 @@ function MasterView() {
       const created = await res.json();
       setCampaigns((list) => [created, ...list]);
 
-      if (pdfFile) {
-        try {
-          const form = new FormData();
-          form.append('file', pdfFile);
-          form.append('campaignId', created.id);
-          const up = await fetch(API + '/pdfs', { method: 'POST', body: form });
-          if (up.ok) {
-            const meta = await up.json();
-            setPdfs((list) => [meta, ...list]);
-          } else {
-            const err = await up.json().catch(() => ({}));
-            setUploadError(err.error || 'Falha no upload do PDF');
-          }
-        } catch (e) {
-          setUploadError(e.message || 'Erro no upload');
-        }
-      }
-
-      if (imageFile) {
-        try {
-          const formImg = new FormData();
-          formImg.append('file', imageFile);
-          formImg.append('campaignId', created.id);
-          const ui = await fetch(API + '/images', { method: 'POST', body: formImg });
-          if (ui.ok) {
-            const metaImg = await ui.json();
-            setImages((list) => [metaImg, ...list]);
-          } else {
-            const errI = await ui.json().catch(() => ({}));
-            setUploadError(errI.error || 'Falha no upload da imagem');
-          }
-        } catch (e) { setUploadError(e.message || 'Erro no upload da imagem'); }
-      }
-
-      setName(''); setSystem(''); setDescription(''); setIsPrivate(false); setPdfFile(null); setImageFile(null);
+      setName(''); setSystem(''); setDescription(''); setIsPrivate(false);
     } catch (e) {
       setError(e.message === 'Failed to fetch' ? 'Não foi possível conectar à API. Verifique se o servidor está rodando.' : (e.message || 'Erro ao salvar'));
     } finally {
@@ -121,9 +87,21 @@ function MasterView() {
   }
 
   const materialsFor = (id) => pdfs.filter((p) => p.campaignId === id);
-  const coverFor = (id) => { const item = images.find((i) => i.campaignId === id); return item ? (API + item.url) : null; };
+  const coverFor = (id) => { const camp = campaigns.find((c) => c.id === id); if (camp && camp.coverImageUrl) return API + camp.coverImageUrl; const item = images.find((i) => i.campaignId === id); return item ? (API + item.url) : null; };
   const initials = (s) => (s || '?').trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
   const [view, setView] = useState('choose'); // 'choose' | 'create' | 'list'
+  const [reveal, setReveal] = useState('up'); // 'left' | 'right' | 'up'
+
+  const computeReveal = (current, next) => {
+    if (current === 'choose') return next === 'create' ? 'left' : 'right';
+    if (current === 'create' && next === 'list') return 'right';
+    if (current === 'list' && next === 'create') return 'left';
+    return 'up';
+  };
+  const switchTo = (next) => {
+    setReveal(computeReveal(view, next));
+    setView(next);
+  };
 
   const CreateForm = (
     <section className="form-card" aria-labelledby="form-title">
@@ -148,22 +126,7 @@ function MasterView() {
                 <span className="muted small">Marque para tornar a campanha privada (somente por convite)</span>
               </div>
             </div>
-            <div className="field">
-              <label><FiFileText style={{ marginRight: 6 }} />Material (PDF) opcional</label>
-              <div className="file-row">
-                <label htmlFor="pdf" className="btn btn-secondary file-btn">Escolher PDF</label>
-                <span className="muted small file-name">{pdfFile ? pdfFile.name : 'Nenhum arquivo selecionado'}</span>
-                <input id="pdf" className="hidden-input" type="file" accept="application/pdf" onChange={(e) => setPdfFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)} />
-              </div>
-            </div>
-            <div className="field">
-              <label><FiImage style={{ marginRight: 6 }} />Capa (imagem) opcional</label>
-              <div className="file-row">
-                <label htmlFor="image" className="btn btn-secondary file-btn">Escolher imagem</label>
-                <span className="muted small file-name">{imageFile ? imageFile.name : 'Nenhuma imagem selecionada'}</span>
-                <input id="image" className="hidden-input" type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)} />
-              </div>
-            </div>
+            {/* Uploads foram movidos para o Lobby */}
             <div className="actions-row">
               <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Salvando...' : 'Cadastrar'}</button>
             </div>
@@ -224,26 +187,31 @@ function MasterView() {
 
   const Tabs = (
     <div className="tab-strip">
-      <button type="button" className={`tab ${view === 'create' ? 'tab-active' : ''}`} onClick={() => setView('create')}><FiPlusCircle style={{ marginRight: 6 }} /> Nova campanha</button>
-      <button type="button" className={`tab ${view === 'list' ? 'tab-active' : ''}`} onClick={() => setView('list')}><FiList style={{ marginRight: 6 }} /> Campanhas</button>
+      <button type="button" className={`tab ${view === 'create' ? 'tab-active' : ''}`} onClick={() => switchTo('create')}><FiPlusCircle style={{ marginRight: 6 }} /> Nova campanha</button>
+      <button type="button" className={`tab ${view === 'list' ? 'tab-active' : ''}`} onClick={() => switchTo('list')}><FiList style={{ marginRight: 6 }} /> Campanhas</button>
     </div>
   );
 
   if (view === 'choose') {
+    const go = (target) => () => switchTo(target);
     return (
       <div className="view-container container mx-auto px-4 lg:px-8">
         <h2 className="text-xl font-semibold">Mestre</h2>
         <p className="text-[var(--muted)]">Escolha uma opção para começar.</p>
-        <div className="choice-grid">
-          <button type="button" className="choice-card" onClick={() => setView('create')}>
-            <FiPlusCircle className="choice-icon" />
-            <div className="choice-title">Nova campanha</div>
-            <div className="choice-desc">Crie uma nova campanha e defina sistema, descrição e privacidade.</div>
+        <div className="split-choice" role="list">
+          <button type="button" role="listitem" className="split-pane left" onClick={go('create')}>
+            <div className="split-inner">
+              <FiPlusCircle className="split-icon" />
+              <div className="split-title">Nova campanha</div>
+              <div className="split-desc">Crie uma campanha e defina sistema, descrição e privacidade.</div>
+            </div>
           </button>
-          <button type="button" className="choice-card" onClick={() => setView('list')}>
-            <FiList className="choice-icon" />
-            <div className="choice-title">Campanhas</div>
-            <div className="choice-desc">Veja e acesse suas campanhas existentes, lobby e mesa.</div>
+          <button type="button" role="listitem" className="split-pane right" onClick={go('list')}>
+            <div className="split-inner">
+              <FiList className="split-icon" />
+              <div className="split-title">Campanhas</div>
+              <div className="split-desc">Veja e acesse suas campanhas: lobby e mesa.</div>
+            </div>
           </button>
         </div>
       </div>
@@ -251,7 +219,7 @@ function MasterView() {
   }
 
   return (
-    <div className="view-container container mx-auto px-4 lg:px-8 space-y-3">
+    <div className={"view-container container mx-auto px-4 lg:px-8 space-y-3 " + (reveal === 'left' ? 'reveal-left' : reveal === 'right' ? 'reveal-right' : 'reveal-up')}>
       <h2 className="text-xl font-semibold">Mestre</h2>
       {Tabs}
       {view === 'create' ? CreateForm : ListPanel}
@@ -260,3 +228,4 @@ function MasterView() {
 }
 
 export default MasterView;
+

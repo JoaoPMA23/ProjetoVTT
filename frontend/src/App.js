@@ -8,6 +8,43 @@ import MasterView from './pages/MasterView2';
 import PlayerView from './pages/PlayerView';
 import Tabletop from './pages/Tabletop';
 import Lobby from './pages/Lobby';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Forgot from './pages/Forgot';
+import Reset from './pages/Reset';
+import { AuthProvider, useAuth } from './AuthContext';
+
+function RequireAuth({ children }) {
+  const { token } = useAuth() || {};
+  if (!token) {
+    return (
+      <div className="view-container" style={{ padding: 24 }}>
+        <p className="muted">Você precisa estar logado para acessar esta página.</p>
+        <Link className="btn btn-primary" to="/login">Entrar</Link>
+      </div>
+    );
+  }
+  return children;
+}
+
+function HeaderAuth() {
+  const { user, logout } = useAuth() || {};
+  return (
+    <div className="header-actions" style={{ gap: 8 }}>
+      {user ? (
+        <>
+          <span className="small muted" style={{ paddingRight: 8 }}>Olá, {user.name || user.email}</span>
+          <button type="button" className="btn btn-secondary" onClick={logout}>Sair</button>
+        </>
+      ) : (
+        <>
+          <Link className="btn btn-secondary" to="/login">Entrar</Link>
+          <Link className="btn btn-primary" to="/register">Cadastrar</Link>
+        </>
+      )}
+    </div>
+  );
+}
 
 function App() {
   const getInitialTheme = () => {
@@ -38,6 +75,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <AuthProvider>
       <div className="layout">
         <header className="site-header">
           <Link to="/" className="brand">ProjetoVTT</Link>
@@ -74,6 +112,7 @@ function App() {
               {menuOpen ? <FiX /> : <FiMenu />}
             </button>
           </div>
+          <HeaderAuth />
         </header>
 
         {menuOpen && (
@@ -107,16 +146,21 @@ function App() {
 
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/mestre" element={<MasterView />} />
+          <Route path="/mestre" element={<RequireAuth><MasterView /></RequireAuth>} />
           <Route path="/jogador" element={<PlayerView />} />
           <Route path="/campaigns/:id/lobby" element={<Lobby />} />
           <Route path="/campaigns/:id/tabletop" element={<Tabletop />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot" element={<Forgot />} />
+          <Route path="/reset" element={<Reset />} />
         </Routes>
 
         <footer className="site-footer">
           <p>© 2025 ProjetoVTT — Todos os direitos reservados</p>
         </footer>
       </div>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
