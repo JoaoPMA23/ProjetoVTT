@@ -4,7 +4,7 @@ import { GiWizardFace, GiBroadsword } from 'react-icons/gi';
 import { FiMoon, FiSun, FiMenu, FiX } from 'react-icons/fi';
 import './App.css';
 import Home from './pages/Home';
-import MasterView from './pages/MasterView';
+import MasterView from './pages/MasterView2';
 import PlayerView from './pages/PlayerView';
 import Tabletop from './pages/Tabletop';
 import Lobby from './pages/Lobby';

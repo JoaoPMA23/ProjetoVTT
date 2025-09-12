@@ -1,4 +1,4 @@
-ï»¿import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 function MasterView() {
   const [campaigns, setCampaigns] = useState([]);
@@ -28,7 +28,7 @@ function MasterView() {
       const data = await res.json();
       setCampaigns(data);
     } catch (e) {
-      setError(e.message === 'Failed to fetch' ? 'NÃ£o foi possÃ­vel conectar Ã  API. Verifique se o servidor estÃ¡ rodando.' : (e.message || 'Erro ao carregar'));
+      setError(e.message === 'Failed to fetch' ? 'Não foi possível conectar à API. Verifique se o servidor está rodando.' : (e.message || 'Erro ao carregar'));
     } finally {
       setLoading(false);
     }
@@ -72,7 +72,7 @@ function MasterView() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'NÃ£o foi possÃ­vel salvar a campanha');
+        throw new Error(err.error || 'Não foi possível salvar a campanha');
       }
       const created = await res.json();
       setCampaigns((list) => [created, ...list]);
@@ -113,7 +113,7 @@ function MasterView() {
 
       setName(''); setSystem(''); setDescription(''); setIsPrivate(false); setPdfFile(null); setImageFile(null);
     } catch (e) {
-      setError(e.message === 'Failed to fetch' ? 'NÃ£o foi possÃ­vel conectar Ã  API. Verifique se o servidor estÃ¡ rodando.' : (e.message || 'Erro ao salvar'));
+      setError(e.message === 'Failed to fetch' ? 'Não foi possível conectar à API. Verifique se o servidor está rodando.' : (e.message || 'Erro ao salvar'));
     } finally {
       setSaving(false);
     }
@@ -183,14 +183,14 @@ function MasterView() {
         <form onSubmit={onSubmit} className="campaign-form">
           <div className="field">
             <label htmlFor="name">Nome</label>
-            <input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: A MaldiÃ§Ã£o de Strahd" />
+            <input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: A Maldição de Strahd" />
           </div>
           <div className="field">
             <label htmlFor="system">Sistema</label>
             <input id="system" value={system} onChange={(e) => setSystem(e.target.value)} placeholder="Ex.: D&D 5e, Tormenta, etc." />
           </div>
           <div className="field">
-            <label htmlFor="description">DescriÃ§Ã£o</label>
+            <label htmlFor="description">Descrição</label>
             <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Resumo da campanha" />
           </div>
           <div className="field">
@@ -232,7 +232,7 @@ function MasterView() {
           <p>Nenhuma campanha cadastrada ainda.</p>
         ) : (
           <div className="carousel-wrap">
-            <button type="button" className="nav-btn prev" disabled={!canLeft} onClick={() => scrollByTile(-1)} aria-label="Anterior">â€¹</button>
+            <button type="button" className="nav-btn prev" disabled={!canLeft} onClick={() => scrollByTile(-1)} aria-label="Anterior">‹</button>
             <div
               className="campaigns-scroller"
               ref={scrollRef}
@@ -260,7 +260,7 @@ function MasterView() {
                               {c.isPrivate ? (
                                 <span className="tag" title="Campanha privada">Privada</span>
                               ) : (
-                                <span className="tag" title="Campanha pÃºblica">PÃºblica</span>
+                                <span className="tag" title="Campanha pública">Pública</span>
                               )}
                             </div>
                             <span className="muted small">Criada em {new Date(c.createdAt).toLocaleString()}</span>
@@ -286,7 +286,7 @@ function MasterView() {
                 );
               })}
             </div>
-            <button type="button" className="nav-btn next" disabled={!canRight} onClick={() => scrollByTile(1)} aria-label="PrÃ³ximo">â€º</button>
+            <button type="button" className="nav-btn next" disabled={!canRight} onClick={() => scrollByTile(1)} aria-label="Próximo">›</button>
             <div className="carousel-pager">
               <div className="dots">
                 {campaigns.map((_, i) => (
