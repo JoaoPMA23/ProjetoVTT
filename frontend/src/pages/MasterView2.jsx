@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { FiMessageCircle, FiMap, FiLock, FiGlobe, FiFileText, FiImage, FiType, FiBookOpen } from 'react-icons/fi';
 
 function MasterView() {
   const [campaigns, setCampaigns] = useState([]);
@@ -124,35 +125,35 @@ function MasterView() {
   const initials = (s) => (s || '?').trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
 
   return (
-    <div className="view-container master-layout">
-      <div className="side-main">
-        <h2>Mestre</h2>
-        <p>Cadastre e gerencie suas campanhas.</p>
+    <div className="view-container master-layout container mx-auto px-4 lg:px-8">
+      <div className="side-main space-y-3">
+        <h2 className="text-xl font-semibold">Mestre</h2>
+        <p className="text-[var(--muted)]">Cadastre e gerencie suas campanhas.</p>
 
         <section className="form-card" aria-labelledby="form-title">
           <h3 id="form-title">Nova campanha</h3>
           <form onSubmit={onSubmit} className="campaign-form">
             <div className="field">
-              <label htmlFor="name">Nome</label>
+              <label htmlFor="name"><FiType style={{ marginRight: 6 }} />Nome</label>
               <input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: A Maldição de Strahd" />
             </div>
             <div className="field">
-              <label htmlFor="system">Sistema</label>
+              <label htmlFor="system"><FiBookOpen style={{ marginRight: 6 }} />Sistema</label>
               <input id="system" value={system} onChange={(e) => setSystem(e.target.value)} placeholder="Ex.: D&D 5e, Tormenta, etc." />
             </div>
             <div className="field">
-              <label htmlFor="description">Descrição</label>
+              <label htmlFor="description"><FiType style={{ marginRight: 6 }} />Descrição</label>
               <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Resumo da campanha" />
             </div>
             <div className="field">
-              <label htmlFor="private">Privacidade</label>
+              <label htmlFor="private">{isPrivate ? <FiLock style={{ marginRight: 6 }} /> : <FiGlobe style={{ marginRight: 6 }} />}Privacidade</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <input id="private" type="checkbox" checked={isPrivate} onChange={(e) => setIsPrivate(e.target.checked)} />
                 <span className="muted small">Marque para tornar a campanha privada (somente por convite)</span>
               </div>
             </div>
             <div className="field">
-              <label>Material (PDF) opcional</label>
+              <label><FiFileText style={{ marginRight: 6 }} />Material (PDF) opcional</label>
               <div className="file-row">
                 <label htmlFor="pdf" className="btn btn-secondary file-btn">Escolher PDF</label>
                 <span className="muted small file-name">{pdfFile ? pdfFile.name : 'Nenhum arquivo selecionado'}</span>
@@ -160,7 +161,7 @@ function MasterView() {
               </div>
             </div>
             <div className="field">
-              <label>Capa (imagem) opcional</label>
+              <label><FiImage style={{ marginRight: 6 }} />Capa (imagem) opcional</label>
               <div className="file-row">
                 <label htmlFor="image" className="btn btn-secondary file-btn">Escolher imagem</label>
                 <span className="muted small file-name">{imageFile ? imageFile.name : 'Nenhuma imagem selecionada'}</span>
@@ -177,7 +178,8 @@ function MasterView() {
       </div>
 
       <aside className="side-aside" aria-labelledby="list-title">
-        <h3 id="list-title">Campanhas</h3>
+        <div className="panel-card">
+          <h3 id="list-title">Campanhas</h3>
         {loading ? (
           <p className="muted">Carregando...</p>
         ) : campaigns.length === 0 ? (
@@ -189,36 +191,42 @@ function MasterView() {
               const cover = coverFor(c.id);
               return (
                 <li key={c.id} className="campaign-menu-item">
-                  <div className="menu-item-main">
-                    <div className="avatar-sm" aria-hidden>{initials(c.name)}</div>
-                    <div className="menu-item-text">
-                      <div className="menu-title">
-                        <strong>{c.name}</strong>
-                        {c.system && <span className="tag">{c.system}</span>}
-                        {c.isPrivate ? (
-                          <span className="tag" title="Campanha privada">Privada</span>
-                        ) : (
-                          <span className="tag" title="Campanha pública">Pública</span>
-                        )}
+                  <a className="menu-item-main-link" href={`/campaigns/${c.id}/lobby`}>
+                    <div className="menu-item-main">
+                      <div className="avatar-sm" aria-hidden>{initials(c.name)}</div>
+                      <div className="menu-item-text">
+                        <div className="menu-title">
+                          <strong>{c.name}</strong>
+                          {c.system && <span className="tag tag--alt">{c.system}</span>}
+                          {c.isPrivate ? (
+                            <span className="tag tag--private" title="Campanha privada"><FiLock style={{ marginRight: 4 }} />Privada</span>
+                          ) : (
+                            <span className="tag tag--public" title="Campanha pública"><FiGlobe style={{ marginRight: 4 }} />Pública</span>
+                          )}
+                        </div>
+                        <span className="muted small">Criada em {new Date(c.createdAt).toLocaleString()}</span>
+                        {cover && <span className="small muted">Capa adicionada</span>}
+                        {mats.length > 0 && <span className="small muted"> • Materiais: {mats.length}</span>}
                       </div>
-                      <span className="muted small">Criada em {new Date(c.createdAt).toLocaleString()}</span>
-                      {cover && <span className="small muted">Capa adicionada</span>}
-                      {mats.length > 0 && <span className="small muted"> • Materiais: {mats.length}</span>}
                     </div>
-                  </div>
+                  </a>
                   <div className="menu-item-actions">
-                    <a className="btn btn-secondary btn-sm" href={`/campaigns/${c.id}/lobby`}>Lobby</a>
-                    <a className="btn btn-primary btn-sm" href={`/campaigns/${c.id}/tabletop`}>Mesa</a>
+                    <a className="btn btn-secondary btn-sm btn-pill" href={`/campaigns/${c.id}/lobby`}>
+                      <FiMessageCircle style={{ marginRight: 6 }} /> Lobby
+                    </a>
+                    <a className="btn btn-primary btn-sm btn-pill" href={`/campaigns/${c.id}/tabletop`}>
+                      <FiMap style={{ marginRight: 6 }} /> Mesa
+                    </a>
                   </div>
                 </li>
               );
             })}
           </ul>
         )}
+        </div>
       </aside>
     </div>
   );
 }
 
 export default MasterView;
-

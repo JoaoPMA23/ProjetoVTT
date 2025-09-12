@@ -1,4 +1,8 @@
-﻿/* Base resets and small utilities */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base resets and small utilities */
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
 body { margin: 0; }
@@ -16,3 +20,4 @@ input, textarea, select, button { font-size: 16px; }
   h2 { font-size: 1.3rem; }
   h3 { font-size: 1.05rem; }
 }
+
