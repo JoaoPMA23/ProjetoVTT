@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import "./Tabletop.css";
 
 function useRaf(callback) {
@@ -18,6 +19,7 @@ function useRaf(callback) {
 }
 
 export default function Tabletop() {
+  const { id: campaignId } = useParams();
   // Canvas/state
   const canvasRef = useRef(null);
   const [gridSize, setGridSize] = useState(64);
@@ -46,6 +48,26 @@ export default function Tabletop() {
   const [diceRoll, setDiceRoll] = useState(null);
   const roll = (sides) =>
     setDiceRoll({ sides, v: 1 + Math.floor(Math.random() * sides) });
+
+  // Load from localStorage when campaign changes
+  useEffect(() => {
+    if (!campaignId) return;
+    const key = `vtt:scene:${campaignId}`;
+    const txt = localStorage.getItem(key);
+    if (!txt) return;
+    try {
+      const data = JSON.parse(txt);
+      setGridSize(data.gridSize ?? 64);
+      setShowGrid(!!data.showGrid);
+      setSnap(!!data.snap);
+      setZoom(data.zoom ?? 1);
+      setPan(data.pan ?? { x: 0, y: 0 });
+      setMapSrc(data.mapSrc ?? null);
+      setMapDim(data.mapDim ?? { w: 0, h: 0 });
+      setTokens(Array.isArray(data.tokens) ? data.tokens : []);
+      setSelectedId(null);
+    } catch {}
+  }, [campaignId]);
 
   // Coordinate transforms
   const worldToView = (pt) => ({ x: (pt.x - pan.x) * zoom, y: (pt.y - pan.y) * zoom });
@@ -145,6 +167,18 @@ export default function Tabletop() {
     };
     fr.readAsText(file);
   };
+
+  // Auto-save to localStorage per campaign
+  useEffect(() => {
+    if (!campaignId) return;
+    const key = `vtt:scene:${campaignId}`;
+    const scene = { gridSize, showGrid, snap, zoom, pan, mapSrc, mapDim, tokens };
+    const safe = {
+      ...scene,
+      mapSrc: scene.mapSrc && String(scene.mapSrc).startsWith("blob:") ? null : scene.mapSrc,
+    };
+    try { localStorage.setItem(key, JSON.stringify(safe)); } catch {}
+  }, [campaignId, gridSize, showGrid, snap, zoom, pan, mapSrc, mapDim, tokens]);
 
   // Rendering
   useRaf(() => {
@@ -309,7 +343,8 @@ export default function Tabletop() {
         const dy = (e.clientY - dragging.current.lastY) / zoom;
         dragging.current.lastX = e.clientX;
         dragging.current.lastY = e.clientY;
-        setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
+        // Invert to make the scene follow the cursor direction
+        setPan((p) => ({ x: p.x - dx, y: p.y - dy }));
       }
     };
 
@@ -610,4 +645,3 @@ export default function Tabletop() {
     </div>
   );
 }
-

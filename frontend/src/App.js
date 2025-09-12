@@ -1,7 +1,7 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { GiWizardFace, GiBroadsword } from 'react-icons/gi';
-import { FiMoon, FiSun, FiMenu, FiX, FiMap } from 'react-icons/fi';
+import { FiMoon, FiSun, FiMenu, FiX } from 'react-icons/fi';
 import './App.css';
 import Home from './pages/Home';
 import MasterView from './pages/MasterView';
@@ -49,10 +49,7 @@ function App() {
               <GiBroadsword className="icon" />
               Jogador
             </Link>
-            <Link to="/tabletop" className="nav-link" aria-label="Ir para mesa virtual">
-              <FiMap className="icon" />
-              Tabletop
-            </Link>
+            {/* Tabletop removido do menu principal; aberto por campanha */}
           </nav>
           <div className="header-actions">
             <button
@@ -103,9 +100,7 @@ function App() {
             <Link to="/jogador" className="mobile-link" onClick={() => setMenuOpen(false)}>
               <GiBroadsword className="icon" /> Jogador
             </Link>
-            <Link to="/tabletop" className="mobile-link" onClick={() => setMenuOpen(false)}>
-              <FiMap className="icon" /> Tabletop
-            </Link>
+            {/* Tabletop removido do menu mobile; aberto por campanha */}
           </nav>
         </div>
 
@@ -113,7 +108,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/mestre" element={<MasterView />} />
           <Route path="/jogador" element={<PlayerView />} />
-          <Route path="/tabletop" element={<Tabletop />} />
+          <Route path="/campaigns/:id/tabletop" element={<Tabletop />} />
         </Routes>
 
         <footer className="site-footer">

@@ -260,6 +260,11 @@ function MasterView() {
                           <span className="muted small">Materiais: {mats.length}</span>
                         </div>
                       )}
+                      <div className="actions-row" style={{ marginTop: 8 }}>
+                        <a className="btn btn-primary" href={`/campaigns/${c.id}/tabletop`}>
+                          Abrir mesa
+                        </a>
+                      </div>
                     </div>
                   </article>
                 );
