@@ -148,8 +148,8 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/mestre" element={<RequireAuth><MasterView /></RequireAuth>} />
           <Route path="/jogador" element={<PlayerView />} />
-          <Route path="/campaigns/:id/lobby" element={<Lobby />} />
-          <Route path="/campaigns/:id/tabletop" element={<Tabletop />} />
+          <Route path="/campaigns/:id/lobby" element={<RequireAuth><Lobby /></RequireAuth>} />
+          <Route path="/campaigns/:id/tabletop" element={<RequireAuth><Tabletop /></RequireAuth>} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot" element={<Forgot />} />

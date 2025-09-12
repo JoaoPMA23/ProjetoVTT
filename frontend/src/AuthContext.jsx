@@ -13,16 +13,16 @@ export function AuthProvider({ children }) {
   useEffect(() => { token ? localStorage.setItem('vtt:token', token) : localStorage.removeItem('vtt:token'); }, [token]);
   useEffect(() => { user ? localStorage.setItem('vtt:user', JSON.stringify(user)) : localStorage.removeItem('vtt:user'); }, [user]);
 
-  const login = async (email, password) => {
-    const res = await fetch(API + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+  const login = async (email, password, remember=false) => {
+    const res = await fetch(API + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password, remember }) });
     if (!res.ok) throw new Error((await res.json().catch(()=>({}))).error || 'Falha no login');
     const data = await res.json();
     setToken(data.token || '');
     setUser(data.user || null);
   };
 
-  const register = async (name, email, password) => {
-    const res = await fetch(API + '/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password }) });
+  const register = async (name, email, password, remember=false) => {
+    const res = await fetch(API + '/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password, remember }) });
     if (!res.ok) throw new Error((await res.json().catch(()=>({}))).error || 'Falha no cadastro');
     const data = await res.json();
     setToken(data.token || '');

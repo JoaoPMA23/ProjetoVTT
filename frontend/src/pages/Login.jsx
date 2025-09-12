@@ -6,6 +6,7 @@ export default function Login() {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [remember, setRemember] = useState(true);
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
@@ -15,7 +16,7 @@ export default function Login() {
 
   const onSubmit = async (e) => {
     e.preventDefault(); setErr(''); setLoading(true);
-    try { await login(email, password); nav('/mestre'); } catch (e) { setErr(e.message || 'Falha no login'); } finally { setLoading(false); }
+    try { await login(email, password, remember); nav('/mestre'); } catch (e) { setErr(e.message || 'Falha no login'); } finally { setLoading(false); }
   };
 
   return (
@@ -24,6 +25,7 @@ export default function Login() {
         <h3>Entrar</h3>
         <div className="field"><label htmlFor="email">Email</label><input id="email" value={email} onChange={(e)=>setEmail(e.target.value)} aria-invalid={!emailOk} /></div>
         <div className="field"><label htmlFor="pass">Senha</label><input id="pass" type="password" value={password} onChange={(e)=>setPassword(e.target.value)} aria-invalid={!passOk} /></div>
+        <div className="field"><label><input type="checkbox" checked={remember} onChange={(e)=>setRemember(e.target.checked)} /> Manter-me conectado</label></div>
         {err && <p className="error-text" role="alert">{err}</p>}
         <div className="actions-row">
           <button className="btn btn-primary" type="submit" disabled={loading || !emailOk || !passOk}>{loading ? 'Entrando...' : 'Entrar'}</button>
