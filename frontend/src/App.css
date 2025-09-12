@@ -303,3 +303,43 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 480px) {
   .campaign-card--tile { width: 94vw; aspect-ratio: 1 / 1.12; }
 }
+
+/* Responsive grid override for campaigns (improves UX/UI) */
+.campaigns-scroller {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  overflow: visible;
+  cursor: default;
+  scroll-snap-type: none;
+  padding: 0;
+}
+.nav-btn, .carousel-pager { display: none !important; }
+.campaign-card--tile {
+  width: auto;
+  aspect-ratio: auto;
+  padding: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(2,6,23,.18);
+  background-size: cover;
+  background-position: center;
+}
+.tile-overlay {
+  position: static;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  background: transparent;
+}
+.tile-desc { margin: 0; }
+.actions-row .btn { flex: 0 0 auto; }
+
+@media (max-width: 768px) {
+  .campaigns-scroller { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+}
+@media (max-width: 480px) {
+  .campaigns-scroller { grid-template-columns: 1fr; }
+}
