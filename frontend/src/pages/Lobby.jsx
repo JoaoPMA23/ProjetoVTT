@@ -17,15 +17,25 @@ export default function Lobby() {
 
   useEffect(() => {
     let mounted = true;
+    async function fetchCampaignById() {
+      // Try direct endpoint; fallback to listing (compat with older API)
+      const direct = await fetch(`${API}/campaigns/${id}`);
+      if (direct.ok) return direct.json();
+      const list = await fetch(`${API}/campaigns`);
+      if (list.ok) {
+        const arr = await list.json();
+        return arr.find((c) => String(c.id) === String(id)) || null;
+      }
+      return null;
+    }
     async function load() {
       try {
         setLoading(true);
-        const [cRes, mRes] = await Promise.all([
-          fetch(`${API}/campaigns/${id}`),
+        const [c, mRes] = await Promise.all([
+          fetchCampaignById(),
           fetch(`${API}/lobbies/${id}/messages?limit=100`),
         ]);
-        if (!cRes.ok) throw new Error('Campanha não encontrada');
-        const c = await cRes.json();
+        if (!c) throw new Error('Campanha não encontrada');
         const m = mRes.ok ? await mRes.json() : [];
         if (!mounted) return;
         setCampaign(c);
@@ -165,4 +175,3 @@ export default function Lobby() {
     </div>
   );
 }
-
