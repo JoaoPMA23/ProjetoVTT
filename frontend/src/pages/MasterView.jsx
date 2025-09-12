@@ -8,6 +8,7 @@ function MasterView() {
   const [name, setName] = useState('');
   const [system, setSystem] = useState('');
   const [description, setDescription] = useState('');
+  const [isPrivate, setIsPrivate] = useState(false);
   const [pdfFile, setPdfFile] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -67,7 +68,7 @@ function MasterView() {
       const res = await fetch(API + '/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, system, description })
+        body: JSON.stringify({ name, system, description, isPrivate })
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -110,7 +111,7 @@ function MasterView() {
         } catch (e) { setUploadError(e.message || 'Erro no upload da imagem'); }
       }
 
-      setName(''); setSystem(''); setDescription(''); setPdfFile(null); setImageFile(null);
+      setName(''); setSystem(''); setDescription(''); setIsPrivate(false); setPdfFile(null); setImageFile(null);
     } catch (e) {
       setError(e.message === 'Failed to fetch' ? 'Não foi possível conectar à API. Verifique se o servidor está rodando.' : (e.message || 'Erro ao salvar'));
     } finally {
@@ -193,6 +194,13 @@ function MasterView() {
             <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Resumo da campanha" />
           </div>
           <div className="field">
+            <label htmlFor="private">Privacidade</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input id="private" type="checkbox" checked={isPrivate} onChange={(e) => setIsPrivate(e.target.checked)} />
+              <span className="muted small">Marque para tornar a campanha privada (somente por convite)</span>
+            </div>
+          </div>
+          <div className="field">
             <label>Material (PDF) opcional</label>
             <div className="file-row">
               <label htmlFor="pdf" className="btn btn-secondary file-btn">Escolher PDF</label>
@@ -249,6 +257,11 @@ function MasterView() {
                             <div className="name-row">
                               <strong>{c.name}</strong>
                               {c.system && <span className="tag">{c.system}</span>}
+                              {c.isPrivate ? (
+                                <span className="tag" title="Campanha privada">Privada</span>
+                              ) : (
+                                <span className="tag" title="Campanha pública">Pública</span>
+                              )}
                             </div>
                             <span className="muted small">Criada em {new Date(c.createdAt).toLocaleString()}</span>
                           </div>
@@ -260,7 +273,10 @@ function MasterView() {
                           <span className="muted small">Materiais: {mats.length}</span>
                         </div>
                       )}
-                      <div className="actions-row" style={{ marginTop: 8 }}>
+                      <div className="actions-row" style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                        <a className="btn btn-secondary" href={`/campaigns/${c.id}/lobby`}>
+                          Abrir lobby
+                        </a>
                         <a className="btn btn-primary" href={`/campaigns/${c.id}/tabletop`}>
                           Abrir mesa
                         </a>

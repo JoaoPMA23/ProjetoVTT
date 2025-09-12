@@ -3,6 +3,8 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+const http = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -18,6 +20,7 @@ const imagesDir = path.join(uploadsDir, 'images');
 const campaignsFile = path.join(dataDir, 'campaigns.json');
 const pdfsFile = path.join(dataDir, 'pdfs.json');
 const imagesFile = path.join(dataDir, 'images.json');
+const chatsFile = path.join(dataDir, 'chats.json');
 
 function ensureData() {
   if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
@@ -27,6 +30,7 @@ function ensureData() {
   if (!fs.existsSync(campaignsFile)) fs.writeFileSync(campaignsFile, '[]', 'utf8');
   if (!fs.existsSync(pdfsFile)) fs.writeFileSync(pdfsFile, '[]', 'utf8');
   if (!fs.existsSync(imagesFile)) fs.writeFileSync(imagesFile, '[]', 'utf8');
+  if (!fs.existsSync(chatsFile)) fs.writeFileSync(chatsFile, '[]', 'utf8');
 }
 function readJSON(file) { ensureData(); try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return []; } }
 function writeJSON(file, data) { ensureData(); fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8'); }
@@ -37,6 +41,8 @@ const readPDFs = () => readJSON(pdfsFile);
 const writePDFs = (d) => writeJSON(pdfsFile, d);
 const readImages = () => readJSON(imagesFile);
 const writeImages = (d) => writeJSON(imagesFile, d);
+const readChats = () => readJSON(chatsFile);
+const writeChats = (d) => writeJSON(chatsFile, d);
 
 app.use('/uploads', express.static(uploadsDir));
 
@@ -62,10 +68,36 @@ app.post('/campaigns', (req, res) => {
   if (!name || typeof name !== 'string' || !name.trim()) return res.status(400).json({ error: 'Field name is required.' });
   const items = readCampaigns();
   const now = new Date().toISOString();
-  const newItem = { id: Date.now().toString(), name: name.trim(), system: typeof system === 'string' ? system.trim() : '', description: typeof description === 'string' ? description.trim() : '', createdAt: now, updatedAt: now };
+  const isPrivate = !!(req.body && typeof req.body.isPrivate === 'boolean' ? req.body.isPrivate : false);
+  const newItem = { id: Date.now().toString(), name: name.trim(), system: typeof system === 'string' ? system.trim() : '', description: typeof description === 'string' ? description.trim() : '', isPrivate, createdAt: now, updatedAt: now };
   items.unshift(newItem);
   writeCampaigns(items);
   res.status(201).json(newItem);
+});
+
+// Get single campaign
+app.get('/campaigns/:id', (req, res) => {
+  const items = readCampaigns();
+  const it = items.find((c) => c.id === String(req.params.id));
+  if (!it) return res.status(404).json({ error: 'Not found' });
+  res.json(it);
+});
+
+// Update campaign (name, system, description, isPrivate)
+app.put('/campaigns/:id', (req, res) => {
+  const items = readCampaigns();
+  const idx = items.findIndex((c) => c.id === String(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'Not found' });
+  const current = items[idx];
+  const next = { ...current };
+  if (typeof req.body?.name === 'string') next.name = req.body.name.trim();
+  if (typeof req.body?.system === 'string') next.system = req.body.system.trim();
+  if (typeof req.body?.description === 'string') next.description = req.body.description.trim();
+  if (typeof req.body?.isPrivate === 'boolean') next.isPrivate = req.body.isPrivate;
+  next.updatedAt = new Date().toISOString();
+  items[idx] = next;
+  writeCampaigns(items);
+  res.json(next);
 });
 
 app.get('/pdfs', (req, res) => {
@@ -97,7 +129,66 @@ app.post('/pdfs', upload.single('file'), (req, res) => {
 
 app.use((err, _req, res, _next) => { console.error(err); res.status(500).json({ error: err.message || 'Internal server error' }); });
 
-app.listen(PORT, () => { console.log('API running on http://localhost:' + PORT); });
+// Chat messages REST (initial load)
+app.get('/lobbies/:id/messages', (req, res) => {
+  const campaignId = String(req.params.id);
+  const items = readChats().filter((m) => m.campaignId === campaignId);
+  const limit = Math.min(parseInt(req.query.limit || '50', 10) || 50, 200);
+  const slice = items.slice(-limit);
+  res.json(slice);
+});
+
+// HTTP server + Socket.IO
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: '*', methods: ['GET', 'POST'] } });
+
+io.on('connection', (socket) => {
+  socket.on('join', ({ campaignId, name }) => {
+    if (!campaignId) return;
+    const room = 'camp:' + String(campaignId);
+    socket.join(room);
+    socket.emit('joined', { room });
+  });
+
+  socket.on('chat:send', (payload) => {
+    const { campaignId, author, text } = payload || {};
+    const cid = String(campaignId || '');
+    if (!cid) return;
+    if (!text || typeof text !== 'string') return;
+    const now = new Date().toISOString();
+    const msg = {
+      id: Date.now().toString(),
+      campaignId: cid,
+      author: String(author || 'Anônimo'),
+      text: String(text).slice(0, 1000),
+      ts: now,
+    };
+    const items = readChats();
+    items.push(msg);
+    writeChats(items);
+    io.to('camp:' + cid).emit('chat:new', msg);
+  });
+
+  socket.on('campaign:update', (payload) => {
+    const { id, name, system, description, isPrivate } = payload || {};
+    const cid = String(id || '');
+    if (!cid) return;
+    const items = readCampaigns();
+    const idx = items.findIndex((c) => c.id === cid);
+    if (idx === -1) return;
+    const next = { ...items[idx] };
+    if (typeof name === 'string') next.name = name.trim();
+    if (typeof system === 'string') next.system = system.trim();
+    if (typeof description === 'string') next.description = description.trim();
+    if (typeof isPrivate === 'boolean') next.isPrivate = isPrivate;
+    next.updatedAt = new Date().toISOString();
+    items[idx] = next;
+    writeCampaigns(items);
+    io.to('camp:' + cid).emit('campaign:updated', next);
+  });
+});
+
+server.listen(PORT, () => { console.log('API running on http://localhost:' + PORT); });
 
 // Images endpoints (cover per campaign)
 const storageImg = multer.diskStorage({

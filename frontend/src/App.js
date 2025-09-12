@@ -7,6 +7,7 @@ import Home from './pages/Home';
 import MasterView from './pages/MasterView';
 import PlayerView from './pages/PlayerView';
 import Tabletop from './pages/Tabletop';
+import Lobby from './pages/Lobby';
 
 function App() {
   const getInitialTheme = () => {
@@ -108,6 +109,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/mestre" element={<MasterView />} />
           <Route path="/jogador" element={<PlayerView />} />
+          <Route path="/campaigns/:id/lobby" element={<Lobby />} />
           <Route path="/campaigns/:id/tabletop" element={<Tabletop />} />
         </Routes>
 
