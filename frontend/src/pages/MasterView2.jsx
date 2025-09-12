@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FiMessageCircle, FiMap, FiLock, FiGlobe, FiFileText, FiImage, FiType, FiBookOpen } from 'react-icons/fi';
+import { FiMessageCircle, FiMap, FiLock, FiGlobe, FiFileText, FiImage, FiType, FiBookOpen, FiPlusCircle, FiList } from 'react-icons/fi';
 
 function MasterView() {
   const [campaigns, setCampaigns] = useState([]);
@@ -123,15 +123,11 @@ function MasterView() {
   const materialsFor = (id) => pdfs.filter((p) => p.campaignId === id);
   const coverFor = (id) => { const item = images.find((i) => i.campaignId === id); return item ? (API + item.url) : null; };
   const initials = (s) => (s || '?').trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
+  const [view, setView] = useState('choose'); // 'choose' | 'create' | 'list'
 
-  return (
-    <div className="view-container master-layout container mx-auto px-4 lg:px-8">
-      <div className="side-main space-y-3">
-        <h2 className="text-xl font-semibold">Mestre</h2>
-        <p className="text-[var(--muted)]">Cadastre e gerencie suas campanhas.</p>
-
-        <section className="form-card" aria-labelledby="form-title">
-          <h3 id="form-title">Nova campanha</h3>
+  const CreateForm = (
+    <section className="form-card" aria-labelledby="form-title">
+      <h3 id="form-title">Nova campanha</h3>
           <form onSubmit={onSubmit} className="campaign-form">
             <div className="field">
               <label htmlFor="name"><FiType style={{ marginRight: 6 }} />Nome</label>
@@ -174,57 +170,91 @@ function MasterView() {
           </form>
           {error && <p className="error-text" role="alert">{error}</p>}
           {uploadError && <p className="error-text" role="alert">{uploadError}</p>}
-        </section>
-      </div>
+    </section>
+  );
 
-      <aside className="side-aside" aria-labelledby="list-title">
-        <div className="panel-card">
-          <h3 id="list-title">Campanhas</h3>
-        {loading ? (
-          <p className="muted">Carregando...</p>
-        ) : campaigns.length === 0 ? (
-          <p className="muted">Nenhuma campanha cadastrada ainda.</p>
-        ) : (
-          <ul className="campaign-menu" role="list">
-            {campaigns.map((c) => {
-              const mats = materialsFor(c.id);
-              const cover = coverFor(c.id);
-              return (
-                <li key={c.id} className="campaign-menu-item">
-                  <a className="menu-item-main-link" href={`/campaigns/${c.id}/lobby`}>
-                    <div className="menu-item-main">
-                      <div className="avatar-sm" aria-hidden>{initials(c.name)}</div>
-                      <div className="menu-item-text">
-                        <div className="menu-title">
-                          <strong>{c.name}</strong>
-                          {c.system && <span className="tag tag--alt">{c.system}</span>}
-                          {c.isPrivate ? (
-                            <span className="tag tag--private" title="Campanha privada"><FiLock style={{ marginRight: 4 }} />Privada</span>
-                          ) : (
-                            <span className="tag tag--public" title="Campanha pública"><FiGlobe style={{ marginRight: 4 }} />Pública</span>
-                          )}
-                        </div>
-                        <span className="muted small">Criada em {new Date(c.createdAt).toLocaleString()}</span>
-                        {cover && <span className="small muted">Capa adicionada</span>}
-                        {mats.length > 0 && <span className="small muted"> • Materiais: {mats.length}</span>}
+  const ListPanel = (
+    <div className="panel-card" aria-labelledby="list-title">
+      <h3 id="list-title">Campanhas</h3>
+      {loading ? (
+        <p className="muted">Carregando...</p>
+      ) : campaigns.length === 0 ? (
+        <p className="muted">Nenhuma campanha cadastrada ainda.</p>
+      ) : (
+        <ul className="campaign-menu" role="list">
+          {campaigns.map((c) => {
+            const mats = materialsFor(c.id);
+            const cover = coverFor(c.id);
+            return (
+              <li key={c.id} className="campaign-menu-item">
+                <a className="menu-item-main-link" href={`/campaigns/${c.id}/lobby`}>
+                  <div className="menu-item-main">
+                    <div className="avatar-sm" aria-hidden>{initials(c.name)}</div>
+                    <div className="menu-item-text">
+                      <div className="menu-title">
+                        <strong>{c.name}</strong>
+                        {c.system && <span className="tag tag--alt">{c.system}</span>}
+                        {c.isPrivate ? (
+                          <span className="tag tag--private" title="Campanha privada"><FiLock style={{ marginRight: 4 }} />Privada</span>
+                        ) : (
+                          <span className="tag tag--public" title="Campanha pública"><FiGlobe style={{ marginRight: 4 }} />Pública</span>
+                        )}
                       </div>
+                      <span className="muted small">Criada em {new Date(c.createdAt).toLocaleString()}</span>
+                      {cover && <span className="small muted">Capa adicionada</span>}
+                      {mats.length > 0 && <span className="small muted"> • Materiais: {mats.length}</span>}
                     </div>
-                  </a>
-                  <div className="menu-item-actions">
-                    <a className="btn btn-secondary btn-sm btn-pill" href={`/campaigns/${c.id}/lobby`}>
-                      <FiMessageCircle style={{ marginRight: 6 }} /> Lobby
-                    </a>
-                    <a className="btn btn-primary btn-sm btn-pill" href={`/campaigns/${c.id}/tabletop`}>
-                      <FiMap style={{ marginRight: 6 }} /> Mesa
-                    </a>
                   </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                </a>
+                <div className="menu-item-actions">
+                  <a className="btn btn-secondary btn-sm btn-pill" href={`/campaigns/${c.id}/lobby`}>
+                    <FiMessageCircle style={{ marginRight: 6 }} /> Lobby
+                  </a>
+                  <a className="btn btn-primary btn-sm btn-pill" href={`/campaigns/${c.id}/tabletop`}>
+                    <FiMap style={{ marginRight: 6 }} /> Mesa
+                  </a>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+
+  const Tabs = (
+    <div className="tab-strip">
+      <button type="button" className={`tab ${view === 'create' ? 'tab-active' : ''}`} onClick={() => setView('create')}><FiPlusCircle style={{ marginRight: 6 }} /> Nova campanha</button>
+      <button type="button" className={`tab ${view === 'list' ? 'tab-active' : ''}`} onClick={() => setView('list')}><FiList style={{ marginRight: 6 }} /> Campanhas</button>
+    </div>
+  );
+
+  if (view === 'choose') {
+    return (
+      <div className="view-container container mx-auto px-4 lg:px-8">
+        <h2 className="text-xl font-semibold">Mestre</h2>
+        <p className="text-[var(--muted)]">Escolha uma opção para começar.</p>
+        <div className="choice-grid">
+          <button type="button" className="choice-card" onClick={() => setView('create')}>
+            <FiPlusCircle className="choice-icon" />
+            <div className="choice-title">Nova campanha</div>
+            <div className="choice-desc">Crie uma nova campanha e defina sistema, descrição e privacidade.</div>
+          </button>
+          <button type="button" className="choice-card" onClick={() => setView('list')}>
+            <FiList className="choice-icon" />
+            <div className="choice-title">Campanhas</div>
+            <div className="choice-desc">Veja e acesse suas campanhas existentes, lobby e mesa.</div>
+          </button>
         </div>
-      </aside>
+      </div>
+    );
+  }
+
+  return (
+    <div className="view-container container mx-auto px-4 lg:px-8 space-y-3">
+      <h2 className="text-xl font-semibold">Mestre</h2>
+      {Tabs}
+      {view === 'create' ? CreateForm : ListPanel}
     </div>
   );
 }
