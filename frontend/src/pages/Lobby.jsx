@@ -6,7 +6,7 @@ import { useAuth } from '../AuthContext';
 export default function Lobby() {
   const { id } = useParams();
   const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-  const { token } = useAuth() || {};
+  const { token, user } = useAuth() || {};
 
   const [campaign, setCampaign] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -78,6 +78,14 @@ export default function Lobby() {
     load();
     return () => { mounted = false; };
   }, [API, id]);
+
+  // Prefill nickname from authenticated user, if available
+  useEffect(() => {
+    if (user && user.name && !name) {
+      setName(user.name);
+      try { localStorage.setItem('vtt:name', user.name); } catch {}
+    }
+  }, [user, name]);
 
   // Load materials
   useEffect(() => {
@@ -212,7 +220,7 @@ export default function Lobby() {
             ) : (
               messages.map((m) => (
                 <div key={m.id} style={{ marginBottom: 8 }}>
-                  <span className="muted small">[{new Date(m.ts).toLocaleTimeString()}]</span>{' '}
+                  <span className="muted small">[{new Date(m.ts).toLocaleString()}]</span>{' '}
                   <strong>{m.author}:</strong> {m.text}
                 </div>
               ))
