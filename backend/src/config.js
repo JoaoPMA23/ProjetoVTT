@@ -1,3 +1,4 @@
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const path = require('path');
 const fs = require('fs');
 
@@ -29,6 +30,10 @@ module.exports = {
   imagesDir,
   files,
   ensureData,
+  db: {
+    url: process.env.LIBSQL_URL || process.env.TURSO_DATABASE_URL || '',
+    authToken: process.env.LIBSQL_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN || '',
+  },
   jwt: {
     secret: process.env.JWT_SECRET || 'dev_jwt_secret',
     defaultExp: process.env.JWT_DEFAULT_EXP || '7d',
