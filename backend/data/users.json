@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "id": "1765808372432",
+    "name": "Joao Pedro",
+    "email": "teste@joao.com.br",
+    "passwordHash": "$2a$10$XOzNf1DBV7.r1uGMY1s.y.OHhnIYePjkZtkvj44Qa3f0a38wNuihK",
+    "createdAt": "2025-12-15T14:19:32.433Z"
+  }
+]
