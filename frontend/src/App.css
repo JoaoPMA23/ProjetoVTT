@@ -46,8 +46,14 @@ a { color: inherit; text-decoration: none; }
   padding: 16px 24px; border-bottom: 1px solid var(--border);
   background: rgba(10, 14, 28, 0.6); backdrop-filter: blur(6px); position: sticky; top: 0; z-index: 20;
 }
-.header-cluster { display: flex; align-items: center; gap: 12px; }
-@media (max-width: 768px) { .header-cluster { gap: 10px; } }
+.header-center { flex: 1; display: flex; justify-content: center; }
+.nav-cluster { display: flex; align-items: center; gap: 10px; }
+.nav-actions { display: flex; align-items: center; gap: 8px; }
+.header-right { display: flex; align-items: center; gap: 10px; }
+@media (max-width: 768px) {
+  .header-center { justify-content: center; }
+  .nav-cluster { gap: 8px; }
+}
 .brand { font-weight: 700; letter-spacing: 0.4px; }
 
 /* Nav links as buttons */

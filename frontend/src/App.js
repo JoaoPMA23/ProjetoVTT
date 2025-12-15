@@ -79,40 +79,44 @@ function App() {
       <div className="layout">
         <header className="site-header">
           <Link to="/" className="brand">ProjetoVTT</Link>
-          <div className="header-cluster">
-            <nav className="nav" aria-label="Navegação principal">
-              <Link to="/mestre" className="nav-link" aria-label="Ir para visão do Mestre">
-                <GiWizardFace className="icon" />
-                Mestre
-              </Link>
-              <Link to="/jogador" className="nav-link" aria-label="Ir para visão do Jogador">
-                <GiBroadsword className="icon" />
-                Jogador
-              </Link>
-              {/* Tabletop removido do menu principal; aberto por campanha */}
-            </nav>
-            <div className="header-actions">
-              <button
-                type="button"
-                className="theme-toggle"
-                onClick={toggleTheme}
-                aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
-                aria-pressed={theme === 'dark' ? 'true' : 'false'}
-                title={theme === 'dark' ? 'Tema: Escuro' : 'Tema: Claro'}
-              >
-                {theme === 'dark' ? <FiSun /> : <FiMoon />}
-              </button>
-              <button
-                type="button"
-                className="menu-toggle"
-                onClick={() => setMenuOpen((o) => !o)}
-                aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
-                aria-controls="mobile-nav"
-                aria-expanded={menuOpen ? 'true' : 'false'}
-              >
-                {menuOpen ? <FiX /> : <FiMenu />}
-              </button>
+          <div className="header-center">
+            <div className="nav-cluster">
+              <nav className="nav" aria-label="Navegação principal">
+                <Link to="/mestre" className="nav-link" aria-label="Ir para visão do Mestre">
+                  <GiWizardFace className="icon" />
+                  Mestre
+                </Link>
+                <Link to="/jogador" className="nav-link" aria-label="Ir para visão do Jogador">
+                  <GiBroadsword className="icon" />
+                  Jogador
+                </Link>
+                {/* Tabletop removido do menu principal; aberto por campanha */}
+              </nav>
+              <div className="nav-actions">
+                <button
+                  type="button"
+                  className="theme-toggle"
+                  onClick={toggleTheme}
+                  aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
+                  aria-pressed={theme === 'dark' ? 'true' : 'false'}
+                  title={theme === 'dark' ? 'Tema: Escuro' : 'Tema: Claro'}
+                >
+                  {theme === 'dark' ? <FiSun /> : <FiMoon />}
+                </button>
+              </div>
             </div>
+          </div>
+          <div className="header-right">
+            <button
+              type="button"
+              className="menu-toggle"
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
+              aria-controls="mobile-nav"
+              aria-expanded={menuOpen ? 'true' : 'false'}
+            >
+              {menuOpen ? <FiX /> : <FiMenu />}
+            </button>
             <HeaderAuth />
           </div>
         </header>
