@@ -5,10 +5,10 @@ const { authRequired } = require('../services/auth');
 
 const router = express.Router();
 
-router.get('/', async (_req, res) => {
+router.get('/', authRequired, async (req, res) => {
   try {
-    if (db.enabled) return res.json(await db.listCampaigns());
-    return res.json(readCampaigns());
+    if (db.enabled) return res.json(await db.listCampaigns(req.user.id));
+    return res.json(readCampaigns().filter((c) => c.createdBy === req.user.id));
   } catch (e) { console.error(e); res.status(500).json({ error: 'Falha ao listar' }); }
 });
 
@@ -27,15 +27,15 @@ router.post('/', authRequired, async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Falha ao criar' }); }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', authRequired, async (req, res) => {
   try {
     if (db.enabled) {
       const it = await db.getCampaignById(String(req.params.id));
-      if (!it) return res.status(404).json({ error: 'Not found' });
+      if (!it || it.createdBy !== req.user.id) return res.status(404).json({ error: 'Not found' });
       return res.json(it);
     }
     const items = readCampaigns();
-    const it = items.find((c) => c.id === String(req.params.id));
+    const it = items.find((c) => c.id === String(req.params.id) && c.createdBy === req.user.id);
     if (!it) return res.status(404).json({ error: 'Not found' });
     res.json(it);
   } catch (e) { console.error(e); res.status(500).json({ error: 'Falha ao buscar' }); }
@@ -45,6 +45,8 @@ router.put('/:id', authRequired, async (req, res) => {
   try {
     if (db.enabled) {
       const id = String(req.params.id);
+      const existing = await db.getCampaignById(id);
+      if (!existing || existing.createdBy !== req.user.id) return res.status(404).json({ error: 'Not found' });
       const fields = {};
       if (typeof req.body?.name === 'string') fields.name = req.body.name.trim();
       if (typeof req.body?.system === 'string') fields.system = req.body.system.trim();
@@ -57,7 +59,7 @@ router.put('/:id', authRequired, async (req, res) => {
       return res.json(next);
     }
     const items = readCampaigns();
-    const idx = items.findIndex((c) => c.id === String(req.params.id));
+    const idx = items.findIndex((c) => c.id === String(req.params.id) && c.createdBy === req.user.id);
     if (idx === -1) return res.status(404).json({ error: 'Not found' });
     const current = items[idx];
     const next = { ...current };
@@ -75,4 +77,3 @@ router.put('/:id', authRequired, async (req, res) => {
 });
 
 module.exports = router;
-

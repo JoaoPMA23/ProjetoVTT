@@ -18,16 +18,18 @@ function MasterView() {
   const [uploadError, setUploadError] = useState('');
 
   const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-  const { token } = useAuth() || {};
+  const { token, user } = useAuth() || {};
+  const authHeaders = token ? { Authorization: 'Bearer ' + token } : {};
 
   async function fetchCampaigns() {
     try {
       setLoading(true);
       setError('');
-      const res = await fetch(API + '/campaigns');
+      const res = await fetch(API + '/campaigns', { headers: authHeaders });
       if (!res.ok) throw new Error('Falha ao carregar campanhas');
       const data = await res.json();
-      setCampaigns(data);
+      const mine = (user && user.id) ? data.filter((c) => c.createdBy === user.id) : [];
+      setCampaigns(mine);
     } catch (e) {
       setError(e.message === 'Failed to fetch' ? 'Não foi possível conectar à API. Verifique se o servidor está rodando.' : (e.message || 'Erro ao carregar'));
     } finally {
@@ -37,7 +39,7 @@ function MasterView() {
 
   async function fetchPdfs() {
     try {
-      const res = await fetch(API + '/pdfs');
+      const res = await fetch(API + '/pdfs', { headers: authHeaders });
       if (!res.ok) throw new Error('Falha ao carregar PDFs');
       const data = await res.json();
       setPdfs(data);
@@ -48,7 +50,7 @@ function MasterView() {
 
   async function fetchImages() {
     try {
-      const res = await fetch(API + '/images');
+      const res = await fetch(API + '/images', { headers: authHeaders });
       if (!res.ok) throw new Error('Falha ao carregar imagens');
       const data = await res.json();
       setImages(data);
@@ -57,7 +59,7 @@ function MasterView() {
     }
   }
 
-  useEffect(() => { fetchCampaigns(); fetchPdfs(); fetchImages(); }, []);
+  useEffect(() => { fetchCampaigns(); fetchPdfs(); fetchImages(); }, [token]);
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -68,7 +70,7 @@ function MasterView() {
       setUploadError('');
       const res = await fetch(API + '/campaigns', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({ name, system, description, isPrivate })
       });
       if (!res.ok) {
@@ -228,4 +230,3 @@ function MasterView() {
 }
 
 export default MasterView;
-

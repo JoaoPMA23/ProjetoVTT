@@ -168,9 +168,12 @@ async function updateUserFields(id, fields) {
 }
 
 // Campaigns
-async function listCampaigns() {
+async function listCampaigns(userId) {
   if (!enabled) return [];
-  const rs = await client.execute('SELECT * FROM campaigns ORDER BY createdAt DESC');
+  const query = userId
+    ? { sql: 'SELECT * FROM campaigns WHERE createdBy = ? ORDER BY createdAt DESC', args: [String(userId)] }
+    : 'SELECT * FROM campaigns ORDER BY createdAt DESC';
+  const rs = await client.execute(query);
   return (rs.rows || []).map((r) => ({
     id: String(r.id),
     name: r.name || '',

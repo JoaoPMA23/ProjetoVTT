@@ -5,5 +5,19 @@
     "email": "teste@joao.com.br",
     "passwordHash": "$2a$10$XOzNf1DBV7.r1uGMY1s.y.OHhnIYePjkZtkvj44Qa3f0a38wNuihK",
     "createdAt": "2025-12-15T14:19:32.433Z"
+  },
+  {
+    "id": "1765815848612",
+    "name": "teste joao 2",
+    "email": "jpartibsbsjk@jpma.com.br",
+    "passwordHash": "$2a$10$sq78uarwY2FqPr0Y9ysoPupKUt/IhoMMAIZQ5dQJT5vCMnePezESW",
+    "createdAt": "2025-12-15T16:24:08.613Z"
+  },
+  {
+    "id": "1765816371922",
+    "name": "Joao Pedro",
+    "email": "jpmartinsandrade123@gmail.com",
+    "passwordHash": "$2a$10$xRs93uHdYFYvomWal3tJge8Or2z1ITsmru4qJs/PIZVc98kOSDwlS",
+    "createdAt": "2025-12-15T16:32:51.923Z"
   }
 ]

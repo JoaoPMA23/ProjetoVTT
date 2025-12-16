@@ -7,6 +7,7 @@ export default function Lobby() {
   const { id } = useParams();
   const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
   const { token, user } = useAuth() || {};
+  const authHeaders = token ? { Authorization: 'Bearer ' + token } : {};
 
   const [campaign, setCampaign] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -46,9 +47,9 @@ export default function Lobby() {
   useEffect(() => {
     let mounted = true;
     async function fetchCampaignById() {
-      const direct = await fetch(`${API}/campaigns/${id}`);
+      const direct = await fetch(`${API}/campaigns/${id}`, { headers: authHeaders });
       if (direct.ok) return direct.json();
-      const list = await fetch(`${API}/campaigns`);
+      const list = await fetch(`${API}/campaigns`, { headers: authHeaders });
       if (list.ok) {
         const arr = await list.json();
         return arr.find((c) => String(c.id) === String(id)) || null;
@@ -77,7 +78,7 @@ export default function Lobby() {
     }
     load();
     return () => { mounted = false; };
-  }, [API, id]);
+  }, [API, id, token]);
 
   // Prefill nickname from authenticated user, if available
   useEffect(() => {

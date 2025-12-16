@@ -22,6 +22,8 @@ export default function Tabletop() {
   const { id: campaignId } = useParams();
   // Canvas/state
   const canvasRef = useRef(null);
+  const mapImageRef = useRef(null);
+  const imageCache = useRef(new Map());
   const [gridSize, setGridSize] = useState(64);
   const [showGrid, setShowGrid] = useState(true);
   const [snap, setSnap] = useState(true);
@@ -66,6 +68,12 @@ export default function Tabletop() {
       setMapDim(data.mapDim ?? { w: 0, h: 0 });
       setTokens(Array.isArray(data.tokens) ? data.tokens : []);
       setSelectedId(null);
+      // preload map image when restored
+      if (data.mapSrc) {
+        const img = new Image();
+        img.onload = () => { mapImageRef.current = img; };
+        img.src = data.mapSrc;
+      }
     } catch {}
   }, [campaignId]);
 
@@ -76,6 +84,24 @@ export default function Tabletop() {
   // Helpers
   const pointerInToken = (pt, t) =>
     pt.x >= t.x && pt.x <= t.x + t.w && pt.y >= t.y && pt.y <= t.y + t.h;
+
+  const fileToDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(fr.result);
+      fr.onerror = reject;
+      fr.readAsDataURL(file);
+    });
+
+  const getCachedImage = (src) => {
+    if (!src) return null;
+    const cached = imageCache.current.get(src);
+    if (cached) return cached;
+    const img = new Image();
+    img.src = src;
+    imageCache.current.set(src, img);
+    return img;
+  };
 
   const getCanvas = () => {
     const c = canvasRef.current;
@@ -94,44 +120,54 @@ export default function Tabletop() {
   };
 
   // Map handling
-  const onLoadMap = (file) => {
+  const onLoadMap = async (file) => {
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      setMapDim({ w: img.width, h: img.height });
-      setMapSrc(url);
-      setZoom(1);
-      setPan({ x: 0, y: 0 });
-    };
-    img.src = url;
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      const img = new Image();
+      img.onload = () => {
+        mapImageRef.current = img;
+        setMapDim({ w: img.width, h: img.height });
+        setMapSrc(dataUrl);
+        setZoom(1);
+        setPan({ x: 0, y: 0 });
+      };
+      img.src = dataUrl;
+    } catch (e) {
+      console.error("Map load error", e);
+    }
   };
 
   // Token handling
-  const onAddToken = (file) => {
+  const onAddToken = async (file) => {
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      const id = idCounter.current++;
-      const defaultCells = 1; // 1x1 cell token
-      const w = gridSize * defaultCells;
-      const h = (img.height / img.width) * w;
-      const c = canvasRef.current;
-      const center = viewToWorld({ x: c ? c.width / 2 : 400, y: c ? c.height / 2 : 300 });
-      const newT = {
-        id,
-        name: `Token ${id}`,
-        src: url,
-        w,
-        h,
-        x: center.x - w / 2,
-        y: center.y - h / 2,
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      const img = new Image();
+      img.onload = () => {
+        const id = idCounter.current++;
+        const defaultCells = 1; // 1x1 cell token
+        const w = gridSize * defaultCells;
+        const h = (img.height / img.width) * w;
+        const c = canvasRef.current;
+        const center = viewToWorld({ x: c ? c.width / 2 : 400, y: c ? c.height / 2 : 300 });
+        const newT = {
+          id,
+          name: `Token ${id}`,
+          src: dataUrl,
+          w,
+          h,
+          x: center.x - w / 2,
+          y: center.y - h / 2,
+        };
+        imageCache.current.set(dataUrl, img);
+        setTokens((t) => [...t, newT]);
+        setSelectedId(id);
       };
-      setTokens((t) => [...t, newT]);
-      setSelectedId(id);
-    };
-    img.src = url;
+      img.src = dataUrl;
+    } catch (e) {
+      console.error("Token load error", e);
+    }
   };
 
   // Export / Import
@@ -158,8 +194,21 @@ export default function Tabletop() {
         setZoom(data.zoom ?? 1);
         setPan(data.pan ?? { x: 0, y: 0 });
         setMapSrc(data.mapSrc ?? null);
-        setMapDim(data.mapDim ?? { w: 0, h: 0 });
-        setTokens(Array.isArray(data.tokens) ? data.tokens : []);
+        if (data.mapSrc) {
+          const img = new Image();
+          img.onload = () => { mapImageRef.current = img; setMapDim(data.mapDim ?? { w: img.width, h: img.height }); };
+          img.src = data.mapSrc;
+        } else {
+          setMapDim(data.mapDim ?? { w: 0, h: 0 });
+          mapImageRef.current = null;
+        }
+        const importedTokens = Array.isArray(data.tokens) ? data.tokens : [];
+        setTokens(importedTokens);
+        const maxId = importedTokens.reduce((m, t) => Math.max(m, Number(t.id) || 0), 0);
+        idCounter.current = Math.max(idCounter.current, maxId + 1);
+        importedTokens.forEach((t) => {
+          if (t.src) imageCache.current.set(t.src, getCachedImage(t.src));
+        });
         setSelectedId(null);
       } catch {
         // invalid file
@@ -173,11 +222,7 @@ export default function Tabletop() {
     if (!campaignId) return;
     const key = `vtt:scene:${campaignId}`;
     const scene = { gridSize, showGrid, snap, zoom, pan, mapSrc, mapDim, tokens };
-    const safe = {
-      ...scene,
-      mapSrc: scene.mapSrc && String(scene.mapSrc).startsWith("blob:") ? null : scene.mapSrc,
-    };
-    try { localStorage.setItem(key, JSON.stringify(safe)); } catch {}
+    try { localStorage.setItem(key, JSON.stringify(scene)); } catch {}
   }, [campaignId, gridSize, showGrid, snap, zoom, pan, mapSrc, mapDim, tokens]);
 
   // Rendering
@@ -191,14 +236,16 @@ export default function Tabletop() {
 
     // draw map
     if (mapSrc && mapDim.w > 0 && mapDim.h > 0) {
-      const img = new Image();
-      img.src = mapSrc;
-      const tl = worldToView({ x: 0, y: 0 });
-      const br = worldToView({ x: mapDim.w, y: mapDim.h });
-      const w = br.x - tl.x;
-      const h = br.y - tl.y;
-      ctx.globalAlpha = 1;
-      ctx.drawImage(img, tl.x, tl.y, w, h);
+      const img = mapImageRef.current || getCachedImage(mapSrc);
+      if (img && img.complete) {
+        mapImageRef.current = img;
+        const tl = worldToView({ x: 0, y: 0 });
+        const br = worldToView({ x: mapDim.w, y: mapDim.h });
+        const w = br.x - tl.x;
+        const h = br.y - tl.y;
+        ctx.globalAlpha = 1;
+        ctx.drawImage(img, tl.x, tl.y, w, h);
+      }
     }
 
     // grid
@@ -234,20 +281,21 @@ export default function Tabletop() {
 
     // tokens
     tokens.forEach((t) => {
-      const img = new Image();
-      img.src = t.src;
-      const p = worldToView({ x: t.x, y: t.y });
-      const size = worldToView({ x: t.x + t.w, y: t.y + t.h });
-      const w = size.x - p.x;
-      const h = size.y - p.y;
-      ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(img, p.x, p.y, w, h);
-      // border
-      ctx.strokeStyle = t.id === selectedId ? "#60a5fa" : "rgba(0,0,0,0.4)";
-      ctx.lineWidth = t.id === selectedId ? 3 : 2;
-      ctx.beginPath();
-      ctx.rect(p.x, p.y, w, h);
-      ctx.stroke();
+      const img = getCachedImage(t.src);
+      if (img && img.complete) {
+        const p = worldToView({ x: t.x, y: t.y });
+        const size = worldToView({ x: t.x + t.w, y: t.y + t.h });
+        const w = size.x - p.x;
+        const h = size.y - p.y;
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(img, p.x, p.y, w, h);
+        // border
+        ctx.strokeStyle = t.id === selectedId ? "#60a5fa" : "rgba(0,0,0,0.4)";
+        ctx.lineWidth = t.id === selectedId ? 3 : 2;
+        ctx.beginPath();
+        ctx.rect(p.x, p.y, w, h);
+        ctx.stroke();
+      }
     });
 
     // measuring
